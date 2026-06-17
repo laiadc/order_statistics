@@ -1,0 +1,16 @@
+[project]
+name = "iqp-complexity"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "matplotlib>=3.10.8",
+    "networkx>=3.6.1",
+    "numpy>=2.4.2",
+    "pandas>=3.0.0",
+    "pyyaml>=6.0.3",
+    "qiskit>=2.3.0",
+    "qiskit-aer>=0.17.2",
+    "tqdm>=4.67.3",
+]

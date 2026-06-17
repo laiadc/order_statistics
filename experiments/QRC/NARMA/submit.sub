@@ -1,0 +1,66 @@
+# ============================================
+# HTCondor Submission File
+# ============================================
+#
+# This file defines the job requirements and submission parameters
+# for running a parameter sweep on the PIC HTCondor cluster.
+#
+# Usage: condor_submit submit.sub
+#
+
+# ============================================
+# Executable and Arguments
+# ============================================
+
+# Path to the bash script that will be executed on worker nodes
+executable = /nfs/pic.es/user/l/ldomingo/time_series/HPC/subash.sh
+
+initialdir = /nfs/pic.es/user/l/ldomingo/time_series
+
+# Command-line arguments passed to the executable
+arguments = $(family_gates) $(num_gates) $(num_experiments) $(degree) $(K) $(L)
+# ============================================
+# Output Files
+# ============================================
+
+# Standard output: job results and print statements
+output = /nfs/pic.es/user/l/ldomingo/time_series/NARMA/jobs/outs/$(family_gates)_degree$(degree)_ng$(num_gates)_L$(L)_ns$(num_experiments).out
+
+# Standard error: error messages and warnings
+error  = /nfs/pic.es/user/l/ldomingo/time_series/NARMA/jobs/errs/$(family_gates)_degree$(degree)_ng$(num_gates)_L$(L)_ns$(num_experiments).err
+
+# HTCondor log: job lifecycle events (submission, start, completion)
+log    = /nfs/pic.es/user/l/ldomingo/time_series/NARMA/jobs/logs/$(family_gates)_degree$(degree)_ng$(num_gates)_L$(L)_ns$(num_experiments).log
+
+# ============================================
+# Resource Requirements
+# ============================================
+
+# Number of CPU cores requested per job
+request_cpus = 1
+
+# Memory requirement per job
+request_memory = 4 GB
+
+# Job flavor: determines maximum walltime
+# Options: "short" (< 3h), "medium" (6-24h), "long" (> 24h)
++flavour = "medium"
+
+# Hardware requirements: worker node must support AVX instructions
+requirements = Has_avx == true
+
+# ============================================
+# Job Queue
+# ============================================
+#
+# One job per line from params.txt
+#
+# Expected columns in params.txt:
+# family_gates num_gates num_experiments 
+# Example:
+# G3 100 100 
+# G1 10 100
+# Ising 1 100
+#
+
+queue family_gates, num_gates, num_experiments, degree, K, L from /nfs/pic.es/user/l/ldomingo/time_series/HPC/parameters.txt
