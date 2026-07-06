@@ -182,17 +182,19 @@ cython_debug/
 
 # ── Project-specific: Quantum Reservoir Computing ────────────────────────────
 # Generated results and figures (large, reproducible from source)
-results/
+results/qelm/
+results/time_series/
 figures/
 
 # Raw datasets (large; obtain from source)
 data/time_series/emsig_energy_data_by_ems.csv
 
-# Large binary arrays — ignore everywhere except small reference datasets
+# Large binary arrays — ignore everywhere except small reference datasets and ORS results
 *.npz
 *.npy
 !data/LiH/*.npy
 !data/H2O/*.npy
+!results/ors/**
 
 # Serialised circuits (hardware-specific, large)
 *.pkl
