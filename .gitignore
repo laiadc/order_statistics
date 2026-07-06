@@ -186,7 +186,7 @@ results/
 figures/
 
 # Raw datasets (large; obtain from source)
-#data/
+data/time_series/emsig_energy_data_by_ems.csv
 
 # Large binary arrays
 *.npz
