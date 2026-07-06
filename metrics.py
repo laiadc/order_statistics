@@ -600,37 +600,84 @@ def _sample_shadows(
 
 
 # ── 4. Expressibility metrics ─────────────────────────────────────────────────
+def _normalise_measurement_basis(measurement_basis, nqbits):
+    """
+    Convert measurement_basis into a list of length nqbits.
+
+    Accepted formats:
+        None                  -> all Z
+        "Z", "X", or "Y"       -> same basis on all qubits
+        "ZXYYZ"               -> one basis per qubit
+        ["Z", "X", "Y", ...]   -> one basis per qubit
+    """
+    if measurement_basis is None:
+        return ["Z"] * nqbits
+
+    if isinstance(measurement_basis, str):
+        measurement_basis = measurement_basis.upper()
+
+        if measurement_basis in {"X", "Y", "Z"}:
+            return [measurement_basis] * nqbits
+
+        if len(measurement_basis) == nqbits:
+            basis = list(measurement_basis)
+        else:
+            raise ValueError(
+                "measurement_basis must be None, 'X', 'Y', 'Z', "
+                "or a string/list with one entry per qubit."
+            )
+    else:
+        basis = [b.upper() for b in measurement_basis]
+
+    if len(basis) != nqbits:
+        raise ValueError(f"Expected {nqbits} basis labels, got {len(basis)}.")
+
+    if any(b not in {"X", "Y", "Z"} for b in basis):
+        raise ValueError("Measurement basis entries must be 'X', 'Y', or 'Z'.")
+
+    return basis
+
+
+def _apply_measurement_basis(qc, measurement_basis):
+    """
+    Apply basis-change gates before computational-basis measurement.
+
+    Z basis: no gate
+    X basis: apply H
+    Y basis: apply Sdg then H
+    """
+    qc_b = qc.copy()
+    basis = _normalise_measurement_basis(measurement_basis, qc.num_qubits)
+
+    for q, b in enumerate(basis):
+        if b == "X":
+            qc_b.h(q)
+        elif b == "Y":
+            qc_b.sdg(q)
+            qc_b.h(q)
+        elif b == "Z":
+            pass
+
+    return qc_b
 
 def lorentz_curves(
     circuit_fn: Callable[[], QuantumCircuit],
     nqbits: int,
     nshots: int,
     ns: int,
-    statevector = True,
+    statevector=True,
+    measurement_basis=None,
     *,
     verbose: bool = True,
 ) -> tuple:
-    """Compute Lorentz curves for ns independent random circuit instances.
+    """
+    Compute Lorenz curves for ns independent random circuit instances.
 
-    Samples the measurement output distribution of each circuit instance and
-    forms the Lorenz (Lorentz) curve — the cumulative sum of the sorted
-    probability vector. Lower std-dev across instances indicates behavior
-    closer to Haar-random (Porter–Thomas distribution).
-
-    Extracted from get_lorentz_curves in Expressivity measures.ipynb and
-    decoupled from circuit construction.
-
-    Args:
-        circuit_fn: Zero-arg callable returning a QuantumCircuit. Called ns times.
-        nqbits: Number of qubits.
-        nshots: Measurement shots per instance (trade-off: more shots → less noise).
-        ns: Number of independent circuit instances.
-
-    Returns:
-        curves_list: List of ns ndarrays, each shape (2^nqbits,).
-                     curves_list[i][k] = sum of the k+1 largest probabilities.
-        sorted_probs: ndarray shape (ns, 2^nqbits), row i = descending prob vector.
-        last_qc: The last QuantumCircuit built (for inspection).
+    measurement_basis:
+        None                  -> computational Z basis
+        "Z", "X", or "Y"       -> same basis on all qubits
+        "ZXYYZ"               -> one basis per qubit
+        ["Z", "X", "Y", ...]   -> one basis per qubit
     """
     simulator = AerSimulator()
     curves_list = []
@@ -640,22 +687,30 @@ def lorentz_curves(
     for _ in tqdm(range(ns), desc="lorentz_curves", disable=not verbose):
         qc = circuit_fn()
         last_qc = qc
-        qc_m = qc.copy()
-        #qc_m.measure_all()
+
+        # Apply basis change before statevector extraction or measurement
+        qc_m = _apply_measurement_basis(qc, measurement_basis)
+
         transpiled = transpile(qc_m, simulator)
+
         if statevector:
             transpiled.save_statevector()
-            sv = np.array(simulator.run(transpiled).result().get_statevector())  #
+            sv = np.array(simulator.run(transpiled).result().get_statevector())
             p = np.abs(sv) ** 2
+
         else:
             transpiled.measure_all()
             counts = simulator.run(transpiled, shots=nshots).result().get_counts()
-            # Full probability vector over all 2^nqbits basis states (0-pad unobserved)
-            p = np.array(
-                  [counts.get(format(k, f"0{nqbits}b"), 0) for k in range(2**nqbits)],
-                dtype=float,) / nshots
 
-        p_sorted = np.sort(p)[::-1]        # descending
+            p = np.array(
+                [
+                    counts.get(format(k, f"0{nqbits}b"), 0)
+                    for k in range(2 ** nqbits)
+                ],
+                dtype=float,
+            ) / nshots
+
+        p_sorted = np.sort(p)[::-1]
         curves_list.append(np.cumsum(p_sorted))
         sorted_probs_list.append(p_sorted)
 
@@ -853,38 +908,66 @@ def lorentz_curves_noisy(
     ns: int,
     fidelity: float = 1.0,
     statevector: bool = True,
+    measurement_basis=None,
     *,
     verbose: bool = True,
 ) -> tuple:
     """Like lorentz_curves, but applies a global depolarizing channel with the
     given fidelity to each output distribution before sampling/sorting.
 
+    The optional measurement_basis argument changes the measurement basis before
+    extracting the probabilities.
+
     Args:
+        circuit_fn: Zero-argument callable returning a QuantumCircuit.
+        nqbits: Number of qubits.
+        nshots: Number of shots used when statevector=False.
+        ns: Number of independent circuit instances.
         fidelity: f in (0, 1]. f=1 recovers the noiseless case.
         statevector: if True, applies noise analytically to exact probabilities;
                      if False, applies noise then samples shots from p_noisy.
+        measurement_basis:
+            None                  -> computational Z basis
+            "Z", "X", or "Y"       -> same basis on all qubits
+            "ZXYYZ"               -> one basis per qubit
+            ["Z", "X", "Y", ...]   -> one basis per qubit.
     """
     simulator = AerSimulator()
     D = 2 ** nqbits
+
     curves_list = []
     sorted_probs_list = []
     last_qc = None
 
+    if fidelity <= 0 or fidelity > 1:
+        raise ValueError("fidelity must satisfy 0 < fidelity <= 1.")
+
     for _ in tqdm(range(ns), desc="lorentz_curves_noisy", disable=not verbose):
         qc = circuit_fn()
         last_qc = qc
-        qc_sv = qc.copy()
+
+        # Apply the measurement-basis change before extracting probabilities.
+        qc_sv = _apply_measurement_basis(qc, measurement_basis)
+
         qc_sv_t = transpile(qc_sv, simulator)
         qc_sv_t.save_statevector()
+
         sv = np.array(simulator.run(qc_sv_t).result().get_statevector())
         p_ideal = np.abs(sv) ** 2
-        p_noisy = apply_global_depolarizing(p_ideal, fidelity, D)
+
+        p_noisy = apply_global_depolarizing(
+            p_ideal,
+            fidelity,
+            D,
+        )
 
         if statevector:
             p = p_noisy
         else:
-            # Sample shots from the noisy distribution
-            counts_array = np.random.multinomial(nshots, p_noisy)
+            counts_array = np.random.multinomial(
+                nshots,
+                p_noisy,
+            )
             p = counts_array / nshots
 
         p_sorted = np.sort(p)[::-1]

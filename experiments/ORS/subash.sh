@@ -2,7 +2,7 @@
 #
 # HTCondor Job Execution Script (with diagnostics)
 #
-# MAKE THIS EXECUTABLE!!!! chmod +x /nfs/pic.es/user/l/ldomingo/time_series/HPC/subash.sh
+
 set -x
 set -euo pipefail
 
@@ -12,6 +12,7 @@ export OPENBLAS_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export NUMEXPR_NUM_THREADS=1
 export VECLIB_MAXIMUM_THREADS=1
+export SCIPY_OPENBLAS_NUM_THREADS=1   # ← add this
 
 echo "========== JOB START =========="
 date
@@ -23,24 +24,22 @@ echo "_CONDOR_SCRATCH_DIR: $_CONDOR_SCRATCH_DIR"
 echo "================================"
 
 # Extract command-line arguments
-family_gates=$1
-num_gates=$2
-num_experiments=$3
-degree=$4
-K=$5
-L=$6
+ns=$1
+gates_name=$2
+degree=$3
+num_gates=$4
+n_layers=$5
 
 echo "========== INPUT PARAMETERS =========="
-echo "family_gates=$family_gates"
-echo "num_gates=$num_gates"
-echo "num_experiments=$num_experiments"
+echo "ns=$ns"
+echo "gates_name=$gates_name"
 echo "degree=$degree"
-echo "K=$K"
-echo "L=$L"
+echo "num_gates=$num_gates"
+echo "n_layers=$n_layers"
 echo "======================================"
 
 # Navigate to project directory (use absolute path for safety)
-PROJECT_DIR="/nfs/pic.es/user/l/ldomingo/time_series/HPC"
+PROJECT_DIR="/nfs/pic.es/user/l/ldomingo/complexity/HPC"
 
 echo "=== Changing to project directory: $PROJECT_DIR ==="
 cd "$PROJECT_DIR" || { echo "ERROR: Failed to cd to $PROJECT_DIR"; exit 1; }
@@ -62,21 +61,20 @@ python --version
 
 # Check script exists
 echo "=== Checking Python script ==="
-if [ ! -f "narma_QRC.py" ]; then
-    echo "ERROR: narma_QRC.py not found!"
+if [ ! -f "run_ORS_noisy_multibasis.py" ]; then
+    echo "ERROR: run_ORS_noisy_multibasis.py not found!"
     exit 1
 fi
 
 echo "========== EXECUTING PYTHON =========="
 
 # Run Python unbuffered to ensure logs appear
-taskset -c 0 python -u narma_QRC.py \
-    --family-gates "$family_gates" \
-    --num-experiments "$num_experiments" \
-    --num-gates "$num_gates" \
+taskset -c 0 python run_ORS_noisy_multibasis.py \
+    --ns "$ns" \
+    --gates-name "$gates_name" \
     --degree "$degree" \
-    --K "$K" \
-    --L "$L"
+    --num-gates "$num_gates" \
+    --n-layers "$n_layers"
 
 exit_code=$?
 

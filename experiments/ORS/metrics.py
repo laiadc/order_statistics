@@ -10,7 +10,7 @@ Public API
 ----------
 Circuit factory
     build_circuit(gates_name, nqbits, *, depth, expected_degree, n_layers,
-                  scrambler_depth, haar_mode) -> Callable[[], QuantumCircuit]
+                  haar_mode) -> Callable[[], QuantumCircuit]
 
 Expressibility
     lorentz_curves(circuit_fn, nqbits, nshots, ns)
@@ -57,6 +57,10 @@ from scipy.special import betaln
 import mpmath as mp
 from scipy.special import betaln, digamma
 
+from collections import defaultdict
+from typing import  Dict, Set, Tuple
+from qiskit import  ClassicalRegister
+
 warnings.filterwarnings("ignore")
 
 
@@ -97,146 +101,372 @@ def _apply_gate_batch(sv_batch: np.ndarray, gate: np.ndarray,
 
 # ── 2. Circuit builders ───────────────────────────────────────────────────────
 
-# ── Private helpers (each returns one fresh random instance per call) ─────────
-
-def _circuit_D2(nqbits: int) -> QuantumCircuit:
-    """IQP circuit: H^⊗n · (all-pairs 2-qubit diagonal UnitaryGate) · H^⊗n.
-
-    Each pair (i,j) gets an independent random 4×4 diagonal unitary drawn
-    from U[0, 2π] phases. Both phase and pairing order are re-sampled every call.
+# ============================================================
+# Helpers for block-aware construction
+# ============================================================
+def _resolve_target(nqbits: int,
+                    qc: Optional[QuantumCircuit] = None,
+                    qubits: Optional[List[int]] = None
+                    ) -> Tuple[QuantumCircuit, List[int], bool]:
     """
-    qubit_idx = list(range(nqbits))
-    qubits_set = list(itertools.combinations(qubit_idx, 2))
-    qubits_set = [qubits_set[i] for i in np.random.permutation(len(qubits_set))]
-    phis = np.random.uniform(0, 2 * np.pi, size=(len(qubits_set), 4))
+    Resolve (qc, qubits) into a target circuit and a list of physical qubits
+    on which to build.
 
-    qc = QuantumCircuit(nqbits)
-    for i in range(nqbits):
-        qc.h(i)
-    for i, pair in enumerate(qubits_set):
-        diag = np.diag(np.exp(1j * phis[i]))
-        qc.append(UnitaryGate(diag), [pair[0], pair[1]])
-    for i in range(nqbits):
-        qc.h(i)
-    return qc
-
-
-def _circuit_D2_random(nqbits: int, expected_degree: float) -> QuantumCircuit:
-    """IQP circuit on an Erdős–Rényi random graph: H^⊗n · (Rz + Rzz on edges) · H^⊗n.
-
-    Graph topology and all phases are re-sampled on every call.
+    Returns:
+      qc_out:     the QuantumCircuit to append onto.
+      qubits_out: list of `nqbits` physical qubit indices.
+      created:    True if we created a new standalone circuit, False if we are
+                  appending to a pre-existing one.
     """
-    p = expected_degree / (nqbits - 1)
-    G = nx.erdos_renyi_graph(nqbits, p)
-    edges = list(G.edges())
-    phis_1q = np.random.uniform(0, 2 * np.pi, size=nqbits)
-    phis_2q = np.random.uniform(0, 2 * np.pi, size=max(len(edges), 1))
-
-    qc = QuantumCircuit(nqbits)
-    for i in range(nqbits):
-        qc.h(i)
-    for idx, phi in enumerate(phis_1q):
-        qc.rz(2 * phi, idx)
-    for (u, v), phi in zip(edges, phis_2q):
-        qc.rzz(2 * phi, u, v)
-    for i in range(nqbits):
-        qc.h(i)
-    return qc
+    if qc is None and qubits is None:
+        # Standalone mode: create a new logical circuit on qubits 0..nqbits-1.
+        qc_out = QuantumCircuit(nqbits)
+        return qc_out, list(range(nqbits)), True
+    if qc is None or qubits is None:
+        raise ValueError(
+            "Provide both `qc` and `qubits` for block mode, or neither for "
+            "standalone mode."
+        )
+    if len(qubits) != nqbits:
+        raise ValueError(
+            f"len(qubits)={len(qubits)} does not match nqbits={nqbits}"
+        )
+    return qc, list(qubits), False
 
 
-def _circuit_G(nqbits: int, gate_set_name: str, depth: int) -> QuantumCircuit:
-    """Random gate-sequence circuit from a named gate set.
+def _block_edges(qubits: List[int],
+                 adj: Optional[Dict[int, Set[int]]]) -> List[Tuple[int, int]]:
+    """
+    Return the list of physical edges (a, b) with a < b that lie inside the
+    block defined by `qubits`. If `adj` is None, falls back to all-to-all
+    connectivity on the block (i.e. all pairs).
+    """
+    if adj is None:
+        return [(a, b) for a, b in itertools.combinations(qubits, 2)]
+    qset = set(qubits)
+    edges = []
+    for a in qubits:
+        for b in adj.get(a, ()):
+            if b in qset and a < b:
+                edges.append((a, b))
+    return edges
 
-    gate_set_name must be one of 'G1', 'G2', 'G3'.
-    Applies nqbits * depth gates sampled uniformly from the gate set.
+
+# ============================================================
+# Per-family builders
+# ============================================================
+def _circuit_G(nqbits: int, gate_set_name: str, depth: int,
+               rng: Optional[np.random.Generator] = None,
+               qc: Optional[QuantumCircuit] = None,
+               qubits: Optional[List[int]] = None,
+               adj: Optional[Dict[int, Set[int]]] = None) -> QuantumCircuit:
+    """
+    Random gate-sequence circuit from {CNOT, H, X/S/T}. Applies nqbits*depth
+    gates. When `adj` is provided, CNOTs are sampled only from physical edges
+    inside the block.
     """
     gate_sets = {
         "G1": ["CNOT", "H", "X"],
         "G2": ["CNOT", "H", "S"],
         "G3": ["CNOT", "H", "T"],
     }
-    gates_set = gate_sets[gate_set_name]
+    gates = gate_sets[gate_set_name]
+    rng = rng or np.random.default_rng()
+    qc, qubits, _ = _resolve_target(nqbits, qc, qubits)
+
+    edges = _block_edges(qubits, adj)
+    if not edges:
+        raise RuntimeError(f"No coupling edges inside block {qubits}")
+
     num_gates = nqbits * depth
-    qubit_idx = list(range(nqbits))
-    gate_idx = list(range(len(gates_set)))
-
-    qc = QuantumCircuit(nqbits)
     for _ in range(num_gates):
-        gate = gates_set[random.choice(gate_idx)]
-        if gate == "CNOT":
-            q1 = random.choice(qubit_idx)
-            others = [q for q in qubit_idx if q != q1]
-            q2 = random.choice(others)
-            qc.cx(q1, q2)
+        g = gates[rng.integers(len(gates))]
+        if g == "CNOT":
+            a, b = edges[rng.integers(len(edges))]
+            qc.cx(int(a), int(b))
         else:
-            q = random.choice(qubit_idx)
-            if gate == "H":
-                qc.h(q)
-            elif gate == "X":
-                qc.x(q)
-            elif gate == "S":
-                qc.s(q)
-            elif gate == "T":
-                qc.t(q)
+            q = qubits[rng.integers(len(qubits))]
+            if g == "H":
+                qc.h(int(q))
+            elif g == "X":
+                qc.x(int(q))
+            elif g == "S":
+                qc.s(int(q))
+            elif g == "T":
+                qc.t(int(q))
     return qc
 
 
-def _apply_brickwork_scrambler(qc: QuantumCircuit, nqbits: int,
-                                scrambler_depth: int) -> None:
-    """Apply scrambler_depth brickwork layers of random 2-qubit Haar gates (in-place).
-
-    1D open chain; even layers cover pairs (0,1),(2,3),...; odd layers (1,2),(3,4),...
-    Each pair gets an independent fresh Haar-random 4×4 unitary.
+def _circuit_D2_random(nqbits: int, expected_degree: float,
+                       basis: str = "Z",
+                       rng: Optional[np.random.Generator] = None,
+                       qc: Optional[QuantumCircuit] = None,
+                       qubits: Optional[List[int]] = None,
+                       adj: Optional[Dict[int, Set[int]]] = None
+                       ) -> QuantumCircuit:
     """
-    for k in range(scrambler_depth):
-        start = k % 2
-        pairs = [(i, i + 1) for i in range(start, nqbits - 1, 2)]
-        for q0, q1 in pairs:
-            U = random_unitary(4).data
-            qc.append(UnitaryGate(U), [q0, q1])
+    IQP-like circuit on an Erdős–Rényi graph: H · (R + RR on edges) · H.
 
+    basis='Z' uses rz/rzz; 'X' uses rx/rxx; 'Y' uses ry/ryy.
 
-def _circuit_scrambling_ansatz(nqbits: int, n_layers: int,
-                                scrambler_depth: int) -> QuantumCircuit:
-    """Build one scrambling-ansatz instance (arXiv:2602.17281).
-
-    Each layer: Rx(θ) + Rz(θ) on all qubits → brickwork Haar scrambler → Ry(θ) on all.
-    All angles and Haar unitaries are re-sampled on every call.
+    When `adj` is provided, the random graph is restricted to physical edges
+    inside the block.
     """
-    qc = QuantumCircuit(nqbits)
+    rng = rng or np.random.default_rng()
+    qc, qubits, _ = _resolve_target(nqbits, qc, qubits)
+
+    # Build candidate edges (block-physical or all-to-all on the block).
+    candidate_edges = _block_edges(qubits, adj)
+    if not candidate_edges:
+        raise RuntimeError(f"No edges available inside block {qubits}")
+
+    # Sample subset of edges using Erdős–Rényi-like probability.
+    p = expected_degree / (nqbits - 1)
+    chosen_edges = [(a, b) for (a, b) in candidate_edges if rng.random() < p]
+
+    phis_1q = rng.uniform(0, 2 * np.pi, size=nqbits)
+    phis_2q = rng.uniform(0, 2 * np.pi, size=max(len(chosen_edges), 1))
+
+    if basis == "Z":
+        rot1, rot2 = qc.rz, qc.rzz
+    elif basis == "X":
+        rot1, rot2 = qc.rx, qc.rxx
+    elif basis == "Y":
+        rot1, rot2 = qc.ry, qc.ryy
+    else:
+        raise ValueError(f"Unknown basis: {basis}")
+
+    for q in qubits:
+        qc.h(int(q))
+    for q, phi in zip(qubits, phis_1q):
+        rot1(2 * phi, int(q))
+    for (u, v), phi in zip(chosen_edges, phis_2q):
+        rot2(2 * phi, int(u), int(v))
+    for q in qubits:
+        qc.h(int(q))
+    return qc
+
+
+def _circuit_D2_random_XZ(nqbits: int, expected_degree: float, n_layers: int = 1,
+                          rng: Optional[np.random.Generator] = None,
+                          qc: Optional[QuantumCircuit] = None,
+                          qubits: Optional[List[int]] = None,
+                          adj: Optional[Dict[int, Set[int]]] = None
+                          ) -> QuantumCircuit:
+    """Stacked Z and X commuting blocks."""
+    rng = rng or np.random.default_rng()
+    qc, qubits, _ = _resolve_target(nqbits, qc, qubits)
     for _ in range(n_layers):
-        for i in range(nqbits):
-            qc.rx(np.random.uniform(0, 2 * np.pi), i)
-            qc.rz(np.random.uniform(0, 2 * np.pi), i)
-        _apply_brickwork_scrambler(qc, nqbits, scrambler_depth)
-        for i in range(nqbits):
-            qc.ry(np.random.uniform(0, 2 * np.pi), i)
+        _circuit_D2_random(nqbits, expected_degree, basis="Z",
+                           rng=rng, qc=qc, qubits=qubits, adj=adj)
+        _circuit_D2_random(nqbits, expected_degree, basis="X",
+                           rng=rng, qc=qc, qubits=qubits, adj=adj)
     return qc
 
 
-def _circuit_haar_statevector(nqbits: int) -> QuantumCircuit:
-    """Haar-random circuit via random_statevector + StatePreparation.
+def _circuit_D2_random_XZY(nqbits: int, expected_degree: float, n_layers: int = 1,
+                           rng: Optional[np.random.Generator] = None,
+                           qc: Optional[QuantumCircuit] = None,
+                           qubits: Optional[List[int]] = None,
+                           adj: Optional[Dict[int, Set[int]]] = None
+                           ) -> QuantumCircuit:
+    """Stacked Y, Z, and X commuting blocks."""
+    rng = rng or np.random.default_rng()
+    qc, qubits, _ = _resolve_target(nqbits, qc, qubits)
+    for _ in range(n_layers):
+        _circuit_D2_random(nqbits, expected_degree, basis="Y",
+                           rng=rng, qc=qc, qubits=qubits, adj=adj)
+        _circuit_D2_random(nqbits, expected_degree, basis="Z",
+                           rng=rng, qc=qc, qubits=qubits, adj=adj)
+        _circuit_D2_random(nqbits, expected_degree, basis="X",
+                           rng=rng, qc=qc, qubits=qubits, adj=adj)
+    return qc
 
-    Produces an exactly Haar-random output state. Preferred for entanglement
-    and input-sensitivity measurements. Re-samples on every call.
-    """
-    sv = random_statevector(2 ** nqbits).data
-    qc = QuantumCircuit(nqbits)
-    qc.append(StatePreparation(sv), range(nqbits))
+def _circuit_haar_statevector(nqbits: int,
+                              rng: Optional[np.random.Generator] = None,
+                              qc: Optional[QuantumCircuit] = None,
+                              qubits: Optional[List[int]] = None,
+                              adj: Optional[Dict[int, Set[int]]] = None
+                              ) -> QuantumCircuit:
+    """Exact Haar state via random_statevector + StatePreparation."""
+    rng = rng or np.random.default_rng()
+    qc, qubits, _ = _resolve_target(nqbits, qc, qubits)
+    seed = int(rng.integers(2**31))
+    sv = random_statevector(2 ** nqbits, seed=seed).data
+    qc.append(StatePreparation(sv), [int(q) for q in qubits])
     return qc
 
 
-def _circuit_haar_random(nqbits: int, depth: int) -> QuantumCircuit:
-    """Haar-random circuit via random_circuit (gate-sequence approximation).
+def _circuit_haar_random(nqbits: int, depth: int,
+                         rng: Optional[np.random.Generator] = None,
+                         qc: Optional[QuantumCircuit] = None,
+                         qubits: Optional[List[int]] = None,
+                         adj: Optional[Dict[int, Set[int]]] = None
+                         ) -> QuantumCircuit:
+    """Random gate-sequence approximation of Haar via random_circuit."""
+    rng = rng or np.random.default_rng()
+    qc, qubits, _ = _resolve_target(nqbits, qc, qubits)
+    seed = int(rng.integers(2**31))
+    small = random_circuit(nqbits, depth, measure=False, seed=seed)
+    qc.compose(small, qubits=[int(q) for q in qubits], inplace=True)
+    return qc
 
-    Approximates Haar measure via random gate sequences. Use for expressibility
-    (Lorentz curves) to match the Expressivity measures.ipynb convention.
+
+# ============================================================
+# Unified dispatcher: build any family on a block (or standalone)
+# ============================================================
+def build_reservoir(
+    gates_name: str,
+    nqbits: int,
+    *,
+    qc: Optional[QuantumCircuit] = None,
+    qubits: Optional[List[int]] = None,
+    adj: Optional[Dict[int, Set[int]]] = None,
+    rng: Optional[np.random.Generator] = None,
+    depth: int = 100,
+    expected_degree: Optional[float] = None,
+    n_layers: int = 1,
+    haar_mode: str = "statevector",
+) -> QuantumCircuit:
     """
-    return random_circuit(nqbits, depth, measure=False)
+    Build a reservoir circuit of the given family.
+
+    Two modes:
+      Standalone (qc=None, qubits=None):
+        Returns a new QuantumCircuit on logical qubits 0..nqbits-1.
+        Equivalent to the previous build_circuit factory but called eagerly.
+
+      On-block (qc=parent_circuit, qubits=[...], adj=adjacency):
+        Appends the reservoir to `qc` on the specified physical `qubits`,
+        respecting `adj` for any 2Q gate placement that needs to honor
+        coupling.
+
+    Supported gates_name:
+      'G1', 'G2', 'G3'              -- random gate-sequence circuits
+      'D2_random'                   -- IQP on ER graph, Z basis
+      'D2_random_XZ'                -- stacked Z and X IQP blocks
+      'D2_random_XZY'               -- stacked Y, Z, X IQP blocks
+      'scrambling_ansatz'           -- Rx/Rz/brickwork/Ry layers
+      'Haar' (haar_mode='statevector' or 'random_circuit')
+      'identity'                    -- no gates appended
+    """
+    rng = rng or np.random.default_rng()
+
+    if gates_name in ("G1", "G2", "G3"):
+        return _circuit_G(nqbits, gates_name, depth, rng=rng,
+                          qc=qc, qubits=qubits, adj=adj)
+
+    if gates_name == "D2_random":
+        if expected_degree is None:
+            raise ValueError("expected_degree is required for 'D2_random'")
+        return _circuit_D2_random(nqbits, expected_degree, basis="Z", rng=rng,
+                                  qc=qc, qubits=qubits, adj=adj)
+
+    if gates_name == "D2_random_XZ":
+        if expected_degree is None:
+            raise ValueError("expected_degree is required for 'D2_random_XZ'")
+        return _circuit_D2_random_XZ(nqbits, expected_degree, n_layers,
+                                     rng=rng, qc=qc, qubits=qubits, adj=adj)
+
+    if gates_name == "D2_random_XZY":
+        if expected_degree is None:
+            raise ValueError("expected_degree is required for 'D2_random_XZY'")
+        return _circuit_D2_random_XZY(nqbits, expected_degree, n_layers,
+                                      rng=rng, qc=qc, qubits=qubits, adj=adj)
+    if gates_name == "Haar":
+        if haar_mode == "statevector":
+            return _circuit_haar_statevector(nqbits, rng=rng,
+                                             qc=qc, qubits=qubits, adj=adj)
+        elif haar_mode == "random_circuit":
+            return _circuit_haar_random(nqbits, depth, rng=rng,
+                                        qc=qc, qubits=qubits, adj=adj)
+        else:
+            raise ValueError(f"Unknown haar_mode: '{haar_mode}'")
+
+    if gates_name == "identity":
+        qc, qubits, _ = _resolve_target(nqbits, qc, qubits)
+        return qc
+
+    raise ValueError(
+        f"Unknown gates_name '{gates_name}'. Valid: G1, G2, G3, D2_random, "
+        "D2_random_XZ, D2_random_XZY, scrambling_ansatz, Haar, identity."
+    )
 
 
-# ── Public factory ────────────────────────────────────────────────────────────
+# ============================================================
+# Parallel circuit on a backend with multiple disjoint blocks
+# ============================================================
+def coupling_adjacency(backend) -> Dict[int, Set[int]]:
+    """Undirected adjacency dict from the backend's coupling map."""
+    adj = defaultdict(set)
+    for a, b in backend.coupling_map.get_edges():
+        adj[a].add(b)
+        adj[b].add(a)
+    return adj
 
+
+def build_parallel_circuit(
+    backend,
+    blocks: List[List[int]],
+    gates_name: str,
+    *,
+    seed: int = 0,
+    depth: int = 100,
+    expected_degree: Optional[float] = None,
+    n_layers: int = 1,
+    haar_mode: str = "statevector",
+) -> Tuple[QuantumCircuit, List[ClassicalRegister]]:
+    """
+    Build one circuit on `backend` that runs an independent reservoir of the
+    chosen family on each block, in parallel. Each block measures into its
+    own classical register so the bitstrings can be split per block.
+
+    Args:
+        backend: IBM backend (for num_qubits and coupling_map).
+        blocks: list of physical-qubit lists (e.g. from find_disjoint_blocks).
+        gates_name: family name; see build_reservoir for supported values.
+        seed: master RNG seed.
+        depth, expected_degree, n_layers, haar_mode:
+            family-specific parameters; same meaning as in build_reservoir.
+
+    Returns:
+        (qc, cregs): the joint circuit and the list of classical registers
+        in the same order as `blocks`.
+    """
+    adj = coupling_adjacency(backend)
+    qc = QuantumCircuit(backend.num_qubits)
+    cregs = []
+    for i, blk in enumerate(blocks):
+        cr = ClassicalRegister(len(blk), name=f"c{i}")
+        qc.add_register(cr)
+        cregs.append(cr)
+
+    rng = np.random.default_rng(seed)
+
+    for blk in blocks:
+        build_reservoir(
+            gates_name=gates_name,
+            nqbits=len(blk),
+            qc=qc,
+            qubits=list(blk),
+            adj=adj,
+            rng=rng,
+            depth=depth,
+            expected_degree=expected_degree,
+            n_layers=n_layers,
+            haar_mode=haar_mode,
+        )
+
+    for blk, cr in zip(blocks, cregs):
+        for j, q in enumerate(blk):
+            qc.measure(int(q), cr[j])
+
+    return qc, cregs
+
+
+# ============================================================
+# Backward-compatible factory (matches your existing build_circuit API)
+# ============================================================
 def build_circuit(
     gates_name: str,
     nqbits: int,
@@ -244,68 +474,22 @@ def build_circuit(
     depth: int = 100,
     expected_degree: Optional[float] = None,
     n_layers: int = 1,
-    scrambler_depth: int = 1,
     haar_mode: str = "statevector",
 ) -> Callable[[], QuantumCircuit]:
-    """Return a zero-argument factory that builds one random circuit instance per call.
-
-    The returned callable re-samples all random parameters on every invocation,
-    so it can be passed directly as circuit_fn to any metric function.
-
-    Args:
-        gates_name: One of 'D2', 'D2_random', 'G1', 'G2', 'G3', 'Haar',
-                    'scrambling_ansatz', 'identity'.
-        nqbits: Number of qubits.
-        depth: Gate depth for G-family and Haar(haar_mode='random_circuit').
-        expected_degree: Mean graph degree for 'D2_random'. Required when
-                         gates_name='D2_random'.
-        n_layers: Ansatz layer count for 'scrambling_ansatz'.
-        scrambler_depth: Brickwork depth K for 'scrambling_ansatz'.
-        haar_mode: 'statevector' (default) — exact Haar state via random_statevector
-                   + StatePreparation; best for entanglement/sensitivity metrics.
-                   'random_circuit' — approximate Haar via random_circuit(nqbits, depth);
-                   use for lorentz_curves to match Expressivity measures.ipynb convention.
-
-    Returns:
-        A Callable[[], QuantumCircuit]. Each call returns a fresh random instance.
-
-    Haar mode note:
-        'statevector' and 'random_circuit' produce different objects.
-        random_circuit is not exactly Haar at any finite depth; random_statevector
-        + StatePreparation is exact. For order-statistics and Lorentz comparisons,
-        either is fine. For quantitative entanglement benchmarks, use 'statevector'.
-
-    Example:
-        fn = build_circuit('G2', nqbits=4, depth=100)
-        qc = fn()   # one G2 random instance
     """
-    gates_name = gates_name.strip()
-    if gates_name == "D2":
-        return lambda: _circuit_D2(nqbits)
-    elif gates_name == "D2_random":
-        if expected_degree is None:
-            raise ValueError("expected_degree is required for 'D2_random'")
-        return lambda: _circuit_D2_random(nqbits, expected_degree)
-    elif gates_name in ("G1", "G2", "G3"):
-        return lambda: _circuit_G(nqbits, gates_name, depth)
-    elif gates_name == "Haar":
-        if haar_mode == "statevector":
-            return lambda: _circuit_haar_statevector(nqbits)
-        elif haar_mode == "random_circuit":
-            return lambda: _circuit_haar_random(nqbits, depth)
-        else:
-            raise ValueError(f"Unknown haar_mode '{haar_mode}'. Use 'statevector' or 'random_circuit'.")
-    elif gates_name == "scrambling_ansatz":
-        return lambda: _circuit_scrambling_ansatz(nqbits, n_layers, scrambler_depth)
-    elif gates_name == "identity":
-        return lambda: QuantumCircuit(nqbits)
-    else:
-        raise ValueError(
-            f"Unknown gates_name '{gates_name}'. "
-            "Valid options: 'D2', 'D2_random', 'G1', 'G2', 'G3', 'Haar', "
-            "'scrambling_ansatz', 'identity'."
+    Return a zero-arg factory that builds one random reservoir instance per call.
+    Standalone mode (no qc/qubits/adj), preserves the previous metrics.py API.
+    """
+    def factory():
+        return build_reservoir(
+            gates_name=gates_name,
+            nqbits=nqbits,
+            depth=depth,
+            expected_degree=expected_degree,
+            n_layers=n_layers,
+            haar_mode=haar_mode,
         )
-
+    return factory
 
 # ── 3. Shadow sampling kernel ─────────────────────────────────────────────────
 
@@ -416,37 +600,84 @@ def _sample_shadows(
 
 
 # ── 4. Expressibility metrics ─────────────────────────────────────────────────
+def _normalise_measurement_basis(measurement_basis, nqbits):
+    """
+    Convert measurement_basis into a list of length nqbits.
+
+    Accepted formats:
+        None                  -> all Z
+        "Z", "X", or "Y"       -> same basis on all qubits
+        "ZXYYZ"               -> one basis per qubit
+        ["Z", "X", "Y", ...]   -> one basis per qubit
+    """
+    if measurement_basis is None:
+        return ["Z"] * nqbits
+
+    if isinstance(measurement_basis, str):
+        measurement_basis = measurement_basis.upper()
+
+        if measurement_basis in {"X", "Y", "Z"}:
+            return [measurement_basis] * nqbits
+
+        if len(measurement_basis) == nqbits:
+            basis = list(measurement_basis)
+        else:
+            raise ValueError(
+                "measurement_basis must be None, 'X', 'Y', 'Z', "
+                "or a string/list with one entry per qubit."
+            )
+    else:
+        basis = [b.upper() for b in measurement_basis]
+
+    if len(basis) != nqbits:
+        raise ValueError(f"Expected {nqbits} basis labels, got {len(basis)}.")
+
+    if any(b not in {"X", "Y", "Z"} for b in basis):
+        raise ValueError("Measurement basis entries must be 'X', 'Y', or 'Z'.")
+
+    return basis
+
+
+def _apply_measurement_basis(qc, measurement_basis):
+    """
+    Apply basis-change gates before computational-basis measurement.
+
+    Z basis: no gate
+    X basis: apply H
+    Y basis: apply Sdg then H
+    """
+    qc_b = qc.copy()
+    basis = _normalise_measurement_basis(measurement_basis, qc.num_qubits)
+
+    for q, b in enumerate(basis):
+        if b == "X":
+            qc_b.h(q)
+        elif b == "Y":
+            qc_b.sdg(q)
+            qc_b.h(q)
+        elif b == "Z":
+            pass
+
+    return qc_b
 
 def lorentz_curves(
     circuit_fn: Callable[[], QuantumCircuit],
     nqbits: int,
     nshots: int,
     ns: int,
-    statevector = True,
+    statevector=True,
+    measurement_basis=None,
     *,
     verbose: bool = True,
 ) -> tuple:
-    """Compute Lorentz curves for ns independent random circuit instances.
+    """
+    Compute Lorenz curves for ns independent random circuit instances.
 
-    Samples the measurement output distribution of each circuit instance and
-    forms the Lorenz (Lorentz) curve — the cumulative sum of the sorted
-    probability vector. Lower std-dev across instances indicates behavior
-    closer to Haar-random (Porter–Thomas distribution).
-
-    Extracted from get_lorentz_curves in Expressivity measures.ipynb and
-    decoupled from circuit construction.
-
-    Args:
-        circuit_fn: Zero-arg callable returning a QuantumCircuit. Called ns times.
-        nqbits: Number of qubits.
-        nshots: Measurement shots per instance (trade-off: more shots → less noise).
-        ns: Number of independent circuit instances.
-
-    Returns:
-        curves_list: List of ns ndarrays, each shape (2^nqbits,).
-                     curves_list[i][k] = sum of the k+1 largest probabilities.
-        sorted_probs: ndarray shape (ns, 2^nqbits), row i = descending prob vector.
-        last_qc: The last QuantumCircuit built (for inspection).
+    measurement_basis:
+        None                  -> computational Z basis
+        "Z", "X", or "Y"       -> same basis on all qubits
+        "ZXYYZ"               -> one basis per qubit
+        ["Z", "X", "Y", ...]   -> one basis per qubit
     """
     simulator = AerSimulator()
     curves_list = []
@@ -456,22 +687,30 @@ def lorentz_curves(
     for _ in tqdm(range(ns), desc="lorentz_curves", disable=not verbose):
         qc = circuit_fn()
         last_qc = qc
-        qc_m = qc.copy()
-        #qc_m.measure_all()
+
+        # Apply basis change before statevector extraction or measurement
+        qc_m = _apply_measurement_basis(qc, measurement_basis)
+
         transpiled = transpile(qc_m, simulator)
+
         if statevector:
             transpiled.save_statevector()
-            sv = np.array(simulator.run(transpiled).result().get_statevector())  #
+            sv = np.array(simulator.run(transpiled).result().get_statevector())
             p = np.abs(sv) ** 2
+
         else:
             transpiled.measure_all()
             counts = simulator.run(transpiled, shots=nshots).result().get_counts()
-            # Full probability vector over all 2^nqbits basis states (0-pad unobserved)
-            p = np.array(
-                  [counts.get(format(k, f"0{nqbits}b"), 0) for k in range(2**nqbits)],
-                dtype=float,) / nshots
 
-        p_sorted = np.sort(p)[::-1]        # descending
+            p = np.array(
+                [
+                    counts.get(format(k, f"0{nqbits}b"), 0)
+                    for k in range(2 ** nqbits)
+                ],
+                dtype=float,
+            ) / nshots
+
+        p_sorted = np.sort(p)[::-1]
         curves_list.append(np.cumsum(p_sorted))
         sorted_probs_list.append(p_sorted)
 
@@ -669,38 +908,66 @@ def lorentz_curves_noisy(
     ns: int,
     fidelity: float = 1.0,
     statevector: bool = True,
+    measurement_basis=None,
     *,
     verbose: bool = True,
 ) -> tuple:
     """Like lorentz_curves, but applies a global depolarizing channel with the
     given fidelity to each output distribution before sampling/sorting.
 
+    The optional measurement_basis argument changes the measurement basis before
+    extracting the probabilities.
+
     Args:
+        circuit_fn: Zero-argument callable returning a QuantumCircuit.
+        nqbits: Number of qubits.
+        nshots: Number of shots used when statevector=False.
+        ns: Number of independent circuit instances.
         fidelity: f in (0, 1]. f=1 recovers the noiseless case.
         statevector: if True, applies noise analytically to exact probabilities;
                      if False, applies noise then samples shots from p_noisy.
+        measurement_basis:
+            None                  -> computational Z basis
+            "Z", "X", or "Y"       -> same basis on all qubits
+            "ZXYYZ"               -> one basis per qubit
+            ["Z", "X", "Y", ...]   -> one basis per qubit.
     """
     simulator = AerSimulator()
     D = 2 ** nqbits
+
     curves_list = []
     sorted_probs_list = []
     last_qc = None
 
+    if fidelity <= 0 or fidelity > 1:
+        raise ValueError("fidelity must satisfy 0 < fidelity <= 1.")
+
     for _ in tqdm(range(ns), desc="lorentz_curves_noisy", disable=not verbose):
         qc = circuit_fn()
         last_qc = qc
-        qc_sv = qc.copy()
+
+        # Apply the measurement-basis change before extracting probabilities.
+        qc_sv = _apply_measurement_basis(qc, measurement_basis)
+
         qc_sv_t = transpile(qc_sv, simulator)
         qc_sv_t.save_statevector()
+
         sv = np.array(simulator.run(qc_sv_t).result().get_statevector())
         p_ideal = np.abs(sv) ** 2
-        p_noisy = apply_global_depolarizing(p_ideal, fidelity, D)
+
+        p_noisy = apply_global_depolarizing(
+            p_ideal,
+            fidelity,
+            D,
+        )
 
         if statevector:
             p = p_noisy
         else:
-            # Sample shots from the noisy distribution
-            counts_array = np.random.multinomial(nshots, p_noisy)
+            counts_array = np.random.multinomial(
+                nshots,
+                p_noisy,
+            )
             p = counts_array / nshots
 
         p_sorted = np.sort(p)[::-1]
