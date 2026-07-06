@@ -188,9 +188,11 @@ figures/
 # Raw datasets (large; obtain from source)
 data/time_series/emsig_energy_data_by_ems.csv
 
-# Large binary arrays
+# Large binary arrays — ignore everywhere except small reference datasets
 *.npz
 *.npy
+!data/LiH/*.npy
+!data/H2O/*.npy
 
 # Serialised circuits (hardware-specific, large)
 *.pkl
