@@ -1,8 +1,8 @@
 # Diagnosing Quantum Reservoirs at Scale: Expressivity and Coverage
 
-Code and data for the paper **"Diagnosing quantum reservoirs at scale based on expressivity and coverage"**.
+Code and data for the paper **"Diagnosing quantum reservoirs at scale based on expressivity and coverage"**: https://arxiv.org/abs/2607.09445.
 
-We introduce scalable, task-independent diagnostics — the **Order-Statistics Score (ORS)** and the **effective rank** ($R_\text{eff}$) — and validate them against task performance across synthetic, molecular, and real-world time-series benchmarks.
+We introduce scalable, task-independent diagnostics, the **Order-Statistics Score (ORS)** and the **effective rank** ($R_\text{eff}$), and validate them against task performance across synthetic, and real-world benchmarks of quantum reservoir computing and quantum extreme learning machines.
 
 ---
 
@@ -10,8 +10,8 @@ We introduce scalable, task-independent diagnostics — the **Order-Statistics S
 
 ```
 Expressivity/
-├── metrics.py              # Core metrics: ORS, Lorentz curves, Rényi-2, input sensitivity
-├── QELM.py                 # QuantumCircQiskit: circuit families, encodings, feature matrices
+├── metrics.py              # Core metrics: ORS, Lorentz curves, input sensitivity
+├── QELM.py                 # QELM wrapper (static)
 ├── QRC.py                  # QRC wrapper (time-series)
 ├── lanczos.py              # Krylov complexity helpers
 ├── functions_d.py          # D-dimensional auxiliary functions
@@ -77,7 +77,7 @@ Cross-validates ORS against KL divergence, Krylov complexity, and the level-spac
 Two benchmarks with `ns=100` reservoir instances each:
 
 - **QELM Fourier regression** (`n=6`): Fixed reservoir + linear readout on a random Fourier series. ORS gap and $R_\text{eff}$ are swept over gate counts (G families) and degrees (D2 families).
-- **NARMA-10 time series** (`n=3`): QRC with exponential encoding on a nonlinear autoregressive benchmark.
+- **NARMA-10 time series** (`n=4`): QRC with exponential encoding on a nonlinear autoregressive benchmark.
 
 ORS gaps are loaded from `results/ors/noisy_basis/` (multi-basis, `f=1`, `K=4`). $R_\text{eff}$ is computed from the feature matrix SVD.
 
@@ -85,7 +85,7 @@ ORS gaps are loaded from `results/ors/noisy_basis/` (multi-basis, `f=1`, `K=4`).
 Two experiments on physically meaningful tasks:
 
 - **LiH molecular chemistry** (`n=8`, QELM): Ground-state energy prediction along the dissociation curve. Metrics: MSE and ORS gap.
-- **EMSIG energy demand** (`n=3`, QRC): Autoregressive forecasting of real-world electricity consumption. Metric: test $R^2$.
+- **EMSIG energy demand** (`n=4`, QRC): Autoregressive forecasting of real-world electricity consumption. Metric: test $R^2$.
 
 ### Quantum Hardware (`Exp - Quantum Hardware.ipynb`)
 ORS gap measured on physical quantum hardware, using the noisy ORS extension with calibrated fidelity `f`.
