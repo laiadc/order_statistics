@@ -101,7 +101,7 @@ def run_qrc_experiment(gates_name, ns=10, **circuit_kwargs):
         delta_s_list.append(delta_s)
 
         # Quantum features for all 300 ground states
-        obs_res = np.array([qrc.run_circuit(gs) for gs in ground_states])
+        obs_res = qrc.feature_matrix(ground_states)
         var_x = np.std(obs_res, axis=0)
         var_x_list.append(var_x)
 
