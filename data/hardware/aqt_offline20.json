@@ -1,0 +1,85 @@
+{
+ "platform": "AQT trapped-ion offline simulators (proxy for Piast-Q, AQT 20 qubits)",
+ "source": "qiskit_aqt_provider.AQTProvider() default workspace (no token)",
+ "exported_utc": "2026-09-29T11:36:59+00:00",
+ "versions": {
+  "python": "3.13.15",
+  "qiskit": "1.4.6",
+  "qiskit-aer": "0.17.2",
+  "qiskit-aqt-provider": "1.15.0",
+  "aqt-connector": "0.3.0"
+ },
+ "backends": {
+  "offline_simulator_no_noise": {
+   "num_qubits": 20,
+   "native_operations": [
+    "measure",
+    "r",
+    "rxx",
+    "rz"
+   ],
+   "coupling_map": null,
+   "resource_name": "Offline ideal simulator"
+  },
+  "offline_simulator_noise": {
+   "num_qubits": 20,
+   "native_operations": [
+    "measure",
+    "r",
+    "rxx",
+    "rz"
+   ],
+   "coupling_map": null,
+   "resource_name": "Offline noisy simulator"
+  }
+ },
+ "connectivity": "all-to-all (target has no coupling map)",
+ "api_angle_constraints": {
+  "r.theta": {
+   "min_units_of_pi": 0.0,
+   "max_units_of_pi": 1.0,
+   "min_rad": 0.0,
+   "max_rad": 3.141592653589793,
+   "min_inclusive": true,
+   "max_inclusive": true
+  },
+  "r.phi": {
+   "min_units_of_pi": 0.0,
+   "max_units_of_pi": 2.0,
+   "min_rad": 0.0,
+   "max_rad": 6.283185307179586,
+   "min_inclusive": true,
+   "max_inclusive": true
+  },
+  "rxx.theta": {
+   "min_units_of_pi": 0.0,
+   "max_units_of_pi": 0.5,
+   "min_rad": 0.0,
+   "max_rad": 1.5707963267948966,
+   "min_inclusive": true,
+   "max_inclusive": true
+  },
+  "rz.phi": {
+   "min_units_of_pi": null,
+   "max_units_of_pi": null,
+   "min_rad": null,
+   "max_rad": null,
+   "min_inclusive": false,
+   "max_inclusive": false
+  }
+ },
+ "api_probes": {
+  "mid_circuit_measurement": {
+   "accepted": false,
+   "error": "Measurement operations can only be located at the end of the circuit."
+  },
+  "reset": {
+   "accepted": false,
+   "error": "Operation 'reset' not in basis gate set: {rz, r, rxx}"
+  }
+ },
+ "notes": [
+  "Angle constraints are read from aqt_connector.models.operations (GateR, GateRXX, GateRZ).",
+  "qiskit_aqt_provider.circuit_to_aqt rejects measurements that are not at the end of the circuit and any operation outside {rz, r, rxx}."
+ ]
+}

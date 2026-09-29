@@ -1,0 +1,12 @@
+model,window,test_r2
+persistence (ŷ_t = y_t-1),1,0.28598119623897444
+classical linear AR(1),1,0.3995219551587318
+classical linear AR(2),2,0.4450412093176863
+classical linear AR(4),4,0.44377750330607924
+classical linear AR(8),8,0.44415663498692215
+classical linear AR(16),16,0.44353980458456
+classical quadratic AR(1),1,0.41761984186214496
+classical quadratic AR(2),2,0.49247499028545727
+classical quadratic AR(4),4,0.5011684542616921
+classical quadratic AR(8),8,0.5406790460955209
+classical quadratic AR(16),16,0.4945757646353873

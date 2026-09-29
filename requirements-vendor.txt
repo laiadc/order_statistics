@@ -1,0 +1,18 @@
+# Vendor-SDK environment for Exp4 (hardware-native reservoirs).
+#
+# iqm-client[qiskit] requires qiskit<2.2 and qiskit-aqt-provider requires qiskit<2,
+# while the main research environment runs qiskit 2.5. This separate environment is
+# used ONLY by experiments/native_hardware/vendor_*.py, which exchange plain JSON
+# with the main code (no qiskit objects cross environments).
+#
+#   uv venv --python 3.13 ../.venv-vendor
+#   uv pip install --python ../.venv-vendor/bin/python -r requirements-vendor.txt
+#
+# Versions below are the ones used to produce data/hardware/*.json (2026-09-29).
+qiskit==1.4.6
+qiskit-aer==0.17.2
+iqm-client[qiskit]==35.0.3
+qiskit-aqt-provider==1.15.0
+aqt-connector==0.3.0
+numpy==2.5.3
+networkx==3.7
