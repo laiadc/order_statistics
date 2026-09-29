@@ -346,7 +346,6 @@ def build_reservoir(
       'D2_random'                   -- IQP on ER graph, Z basis
       'D2_random_XZ'                -- stacked Z and X IQP blocks
       'D2_random_XZY'               -- stacked Y, Z, X IQP blocks
-      'scrambling_ansatz'           -- Rx/Rz/brickwork/Ry layers
       'Haar' (haar_mode='statevector' or 'random_circuit')
       'identity'                    -- no gates appended
     """
@@ -389,7 +388,7 @@ def build_reservoir(
 
     raise ValueError(
         f"Unknown gates_name '{gates_name}'. Valid: G1, G2, G3, D2_random, "
-        "D2_random_XZ, D2_random_XZY, scrambling_ansatz, Haar, identity."
+        "D2_random_XZ, D2_random_XZY, Haar, identity."
     )
 
 
