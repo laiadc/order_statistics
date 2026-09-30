@@ -1,0 +1,32 @@
+{
+ "config_hash": "190308dce92c",
+ "versions": {
+  "qiskit": "1.4.6",
+  "qiskit-aer": "0.17.2",
+  "iqm-client": "35.0.3",
+  "qiskit-aqt-provider": "1.15.0"
+ },
+ "platform": "aqt",
+ "task": "energy",
+ "level": "0.5",
+ "n_layers": 2,
+ "inputs": 4965,
+ "settings": [
+  "X",
+  "Y",
+  "Z"
+ ],
+ "shots": 10000,
+ "seconds": 1185.8,
+ "backend": "offline_simulator_noise",
+ "swaps": 0,
+ "non_native_circuits": 0,
+ "shot_repeats": [
+  2000,
+  2000,
+  2000,
+  2000,
+  2000
+ ],
+ "workers": 16
+}

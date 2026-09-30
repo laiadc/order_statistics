@@ -1,0 +1,24 @@
+{
+ "config_hash": "190308dce92c",
+ "versions": {
+  "qiskit": "1.4.6",
+  "qiskit-aer": "0.17.2",
+  "iqm-client": "35.0.3",
+  "qiskit-aqt-provider": "1.15.0"
+ },
+ "platform": "iqm",
+ "task": "energy",
+ "level": "1",
+ "n_layers": null,
+ "inputs": 4965,
+ "settings": [
+  "X",
+  "Y",
+  "Z"
+ ],
+ "shots": 10000,
+ "seconds": 170.8,
+ "backend": "IQMFakeAphroditeBackend",
+ "swaps": 0,
+ "non_native_circuits": 0
+}

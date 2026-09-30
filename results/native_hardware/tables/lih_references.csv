@@ -1,0 +1,6 @@
+model,RMSE (mHa)
+"classical ridge, linear in w",4.08
+"classical ridge, quadratic in w",0.49
+"classical ridge, cubic in w",0.47
+Exp3 Haar (full 8-qubit state),0.34
+Exp3 G3_depth1000 (full 8-qubit state),0.34

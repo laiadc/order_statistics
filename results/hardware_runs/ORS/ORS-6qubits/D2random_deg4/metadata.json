@@ -1,0 +1,142 @@
+{
+  "backend_name": "ibm_aachen",
+  "backend_num_qubits": 156,
+  "completed_at_utc": "2026-05-31T14:15:02.836005+00:00",
+  "config": {
+    "backend": {
+      "min_qubits": 127
+    },
+    "circuit": {
+      "buffer": 2,
+      "max_blocks": 10,
+      "n_qubits": 6,
+      "specs": [
+        {
+          "family": "G1",
+          "kwargs": {
+            "depth": 1
+          },
+          "label": "G1_ng5"
+        },
+        {
+          "family": "G3",
+          "kwargs": {
+            "depth": 1
+          },
+          "label": "G3_ng5"
+        },
+        {
+          "family": "G1",
+          "kwargs": {
+            "depth": 2
+          },
+          "label": "G1_ng20"
+        },
+        {
+          "family": "G3",
+          "kwargs": {
+            "depth": 2
+          },
+          "label": "G3_ng20"
+        },
+        {
+          "family": "G1",
+          "kwargs": {
+            "depth": 4
+          },
+          "label": "G1_ng50"
+        },
+        {
+          "family": "G3",
+          "kwargs": {
+            "depth": 4
+          },
+          "label": "G3_ng50"
+        },
+        {
+          "family": "G1",
+          "kwargs": {
+            "depth": 8
+          },
+          "label": "G1_ng100"
+        },
+        {
+          "family": "G3",
+          "kwargs": {
+            "depth": 8
+          },
+          "label": "G3_ng100"
+        },
+        {
+          "family": "G1",
+          "kwargs": {
+            "depth": 17
+          },
+          "label": "G1_ng200"
+        },
+        {
+          "family": "G3",
+          "kwargs": {
+            "depth": 17
+          },
+          "label": "G3_ng200"
+        },
+        {
+          "family": "G1",
+          "kwargs": {
+            "depth": 25
+          },
+          "label": "G1_ng300"
+        },
+        {
+          "family": "G3",
+          "kwargs": {
+            "depth": 25
+          },
+          "label": "G3_ng300"
+        },
+        {
+          "family": "D2_random",
+          "kwargs": {
+            "expected_degree": 1
+          },
+          "label": "D2random_deg1"
+        },
+        {
+          "family": "D2_random",
+          "kwargs": {
+            "expected_degree": 2
+          },
+          "label": "D2random_deg2"
+        },
+        {
+          "family": "D2_random",
+          "kwargs": {
+            "expected_degree": 4
+          },
+          "label": "D2random_deg4"
+        }
+      ]
+    },
+    "error_mitigation": {},
+    "estimator": false,
+    "experiment": "experiments/reservoir.py",
+    "framework": "qiskit",
+    "label": "ORS-6qubits",
+    "output": {
+      "pickle_circuits": true
+    },
+    "session": {
+      "max_time": "20m"
+    },
+    "shots": 50000,
+    "transpilation": {
+      "optimization_level": 1
+    }
+  },
+  "counts_file": "results/hardware_runs/20260531_160805_ibm_aachen/ORS-6qubits/D2random_deg4/counts.json",
+  "label": "D2random_deg4",
+  "samples_file": "results/hardware_runs/20260531_160805_ibm_aachen/ORS-6qubits/D2random_deg4/samples.npz",
+  "saved_at_utc": "2026-05-31T14:15:02.888111+00:00",
+  "started_at_utc": "2026-05-31T14:12:36.626329+00:00"
+}

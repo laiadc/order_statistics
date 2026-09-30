@@ -1,0 +1,5 @@
+| platform         | LiH: level   | LiH: circuit                                   |   LiH: RMSE (mHa) | energy: level   | energy: circuit per time step          |   energy: R² |
+|:-----------------|:-------------|:-----------------------------------------------|------------------:|:----------------|:---------------------------------------|-------------:|
+| Euro-Q-Exa (IQM) | L = 4        | 10 two-qubit gates, depth 8, f ≈ 0.63          |              0.39 | L = 1           | 6 two-qubit gates, depth 6, f ≈ 0.67   |        0.514 |
+| Piast-Q (AQT)    | ρ = 0.5      | 32 two-qubit gates, depth 27, f ≈ 0.65         |              0.36 | ρ = 0.5         | 64 two-qubit gates, depth 54, f ≈ 0.42 |        0.51  |
+| Lucy (Quandela)  | D = 6        | 66 MZIs in 2 meshes + 6 data phases, 3 photons |              0.19 | D = 2           | 66 BS, 12 data phases, 3 photons       |        0.513 |

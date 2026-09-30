@@ -408,28 +408,46 @@ class QuantumCircQiskit:
         Qiskit convention is little-endian (qubit 0 = least significant index),
         so the full state is built as a Kronecker product q = n-1, n-2, ..., 0.
 
-        Returns None if the encoding can't be handled analytically (vector
-        input, 'quantum' encoding, etc.) so the caller falls back to the
-        circuit-based path.
+        Multi-feature inputs follow the same qubit layout as :meth:`_encode`:
+        under 'pauli' feature j drives qubit j; under 'exponential' feature j
+        drives qubits j*k_exp .. j*k_exp+k_exp-1 with angles scaled by 3**l.
+        Unused qubits stay at |0>.
+
+        Returns None if the encoding can't be handled analytically ('quantum'
+        encoding, an input too wide for the register, etc.) so the caller falls
+        back to the circuit-based path.
         """
         if self.encoding == 'quantum':
             return None
 
         y_vec = np.asarray(initial_state, dtype=float).reshape(-1)
-        if len(y_vec) != 1:
-            return None  # multi-feature input → fall back to circuit path
-        x = float(y_vec[0])
+        scalar = len(y_vec) == 1
 
         # Per-qubit angle θ_q (the Rz argument is -θ_q, sign already absorbed below).
         thetas = np.zeros(self.nqbits)
         active = np.zeros(self.nqbits, dtype=bool)
         if self.encoding == 'pauli':
-            thetas[:] = self.theta_scale * x
-            active[:] = True
+            if scalar:
+                thetas[:] = self.theta_scale * float(y_vec[0])
+                active[:] = True
+            else:
+                if len(y_vec) > self.nqbits:
+                    return None      # does not fit the register → circuit path
+                thetas[:len(y_vec)] = self.theta_scale * y_vec
+                active[:len(y_vec)] = True
         elif self.encoding == 'exponential':
-            for q in range(self.k_exp):
-                thetas[q] = self.theta_scale * (3 ** q) * x
-                active[q] = True
+            if scalar:
+                for q in range(self.k_exp):
+                    thetas[q] = self.theta_scale * (3 ** q) * float(y_vec[0])
+                    active[q] = True
+            else:
+                if len(y_vec) * self.k_exp > self.nqbits:
+                    return None      # does not fit the register → circuit path
+                for j, x in enumerate(y_vec):
+                    for l in range(self.k_exp):
+                        q = j * self.k_exp + l
+                        thetas[q] = self.theta_scale * (3 ** l) * x
+                        active[q] = True
         else:
             return None
 
@@ -522,7 +540,18 @@ class QuantumCircQiskit:
         Parameters
         ----------
         x_array : array-like
-            Array of scalar inputs of length N (or shape (N, 1)).
+            One row per sample.  Accepted shapes:
+
+            ``(N,)`` or ``(N, 1)``
+                N scalar inputs.
+            ``(N, m)``
+                N samples of m features, for the 'pauli' and 'exponential'
+                encodings.  Needs m qubits under 'pauli' and m*k_exp under
+                'exponential'; wider inputs fall back to the circuit path,
+                which raises if they do not fit the register.
+            ``(N, 2**nqbits)``
+                N amplitude vectors for the 'quantum' encoding.  A single
+                un-batched state of shape ``(2**nqbits,)`` is also accepted.
 
         Returns
         -------
@@ -531,12 +560,24 @@ class QuantumCircQiskit:
 
         Notes
         -----
-        Requires statevector mode, cached U_res, cached _obs_mats, and scalar
-        pauli/exponential encoding. Falls back to a Python loop over
-        run_circuit otherwise.
+        The vectorised path requires statevector mode, a cached U_res and
+        cached _obs_mats, and a 'pauli'/'exponential' encoding; it covers both
+        scalar and multi-feature rows.  Anything else — the 'quantum'
+        encoding, hardware/shot-noise mode, or a row too wide to encode
+        analytically — falls back to a per-row loop over run_circuit, which
+        returns the same numbers more slowly.
         """
-        x_array = np.asarray(x_array).reshape(-1)
-        N = len(x_array)
+        x = np.asarray(x_array)
+
+        # Normalise to one row per sample.  A 1-D array is N scalar inputs,
+        # except under 'quantum' encoding where it is a single amplitude vector.
+        if self.encoding == 'quantum':
+            X = x.reshape(1, -1) if x.ndim <= 1 else x.reshape(x.shape[0], -1)
+        elif x.ndim <= 1:
+            X = x.reshape(-1, 1)
+        else:
+            X = x.reshape(x.shape[0], -1)
+        N = X.shape[0]
 
         # Check if the fast vectorized path is available
         fast_ok = (self.statevector
@@ -544,15 +585,21 @@ class QuantumCircQiskit:
                    and self._obs_mats is not None
                    and self.encoding in ('pauli', 'exponential'))
 
-        if not fast_ok:
-            return np.array([self.run_circuit(x) for x in x_array])
+        if fast_ok:
+            # Build all encoding states in a batch.  _encode_state_fast returns
+            # None for anything it cannot do analytically (e.g. a row too wide
+            # for the register); in that case drop to the circuit path, which
+            # handles it or raises the same error as a direct run_circuit call.
+            psi_enc = np.empty((N, 2 ** self.nqbits), dtype=complex)
+            for i in range(N):
+                psi_i = self._encode_state_fast(X[i])
+                if psi_i is None:
+                    fast_ok = False
+                    break
+                psi_enc[i] = psi_i
 
-        # Build all encoding states in a batch.
-        # _encode_state_fast returns None for vector inputs / quantum encoding,
-        # but we already gated on encoding ∈ {pauli, exponential} above.
-        psi_enc = np.empty((N, 2 ** self.nqbits), dtype=complex)
-        for i, x in enumerate(x_array):
-            psi_enc[i] = self._encode_state_fast(x)
+        if not fast_ok:
+            return np.array([self.run_circuit(row) for row in X])
 
         # Apply reservoir to all inputs at once: (N, D) = (N, D) @ (D, D)
         psi = psi_enc @ self._U_res.T

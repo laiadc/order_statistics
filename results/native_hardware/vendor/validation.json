@@ -1,0 +1,1223 @@
+{
+ "config_hash": "190308dce92c",
+ "versions": {
+  "qiskit": "1.4.6",
+  "qiskit-aer": "0.17.2",
+  "iqm-client": "35.0.3",
+  "qiskit-aqt-provider": "1.15.0"
+ },
+ "summary": {
+  "n_circuits": 54,
+  "n_ok": 54,
+  "iqm_total_swaps": 0,
+  "aqt_api_payload_ok": true
+ },
+ "circuits": [
+  {
+   "platform": "iqm",
+   "level": "1",
+   "instance": 0,
+   "kind": "reservoir",
+   "ops_after": {
+    "r": 6,
+    "measure": 6,
+    "cz": 3
+   },
+   "swaps": 0,
+   "cz_before": 3,
+   "cz_after": 3,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "1",
+   "instance": 1,
+   "kind": "reservoir",
+   "ops_after": {
+    "r": 6,
+    "measure": 6,
+    "cz": 3
+   },
+   "swaps": 0,
+   "cz_before": 3,
+   "cz_after": 3,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "1",
+   "instance": 2,
+   "kind": "reservoir",
+   "ops_after": {
+    "r": 6,
+    "measure": 6,
+    "cz": 3
+   },
+   "swaps": 0,
+   "cz_before": 3,
+   "cz_after": 3,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "1",
+   "instance": 3,
+   "kind": "reservoir",
+   "ops_after": {
+    "r": 6,
+    "measure": 6,
+    "cz": 3
+   },
+   "swaps": 0,
+   "cz_before": 3,
+   "cz_after": 3,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "1",
+   "instance": 4,
+   "kind": "reservoir",
+   "ops_after": {
+    "r": 6,
+    "measure": 6,
+    "cz": 3
+   },
+   "swaps": 0,
+   "cz_before": 3,
+   "cz_after": 3,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "1",
+   "instance": 0,
+   "kind": "qrc_window",
+   "ops_after": {
+    "r": 19,
+    "cz": 6,
+    "measure": 6
+   },
+   "swaps": 0,
+   "cz_before": 6,
+   "cz_after": 6,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "2",
+   "instance": 0,
+   "kind": "reservoir",
+   "ops_after": {
+    "r": 12,
+    "measure": 6,
+    "cz": 5
+   },
+   "swaps": 0,
+   "cz_before": 5,
+   "cz_after": 5,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "2",
+   "instance": 1,
+   "kind": "reservoir",
+   "ops_after": {
+    "r": 12,
+    "measure": 6,
+    "cz": 5
+   },
+   "swaps": 0,
+   "cz_before": 5,
+   "cz_after": 5,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "2",
+   "instance": 2,
+   "kind": "reservoir",
+   "ops_after": {
+    "r": 12,
+    "measure": 6,
+    "cz": 5
+   },
+   "swaps": 0,
+   "cz_before": 5,
+   "cz_after": 5,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "2",
+   "instance": 3,
+   "kind": "reservoir",
+   "ops_after": {
+    "r": 12,
+    "measure": 6,
+    "cz": 5
+   },
+   "swaps": 0,
+   "cz_before": 5,
+   "cz_after": 5,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "2",
+   "instance": 4,
+   "kind": "reservoir",
+   "ops_after": {
+    "r": 12,
+    "measure": 6,
+    "cz": 5
+   },
+   "swaps": 0,
+   "cz_before": 5,
+   "cz_after": 5,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "2",
+   "instance": 0,
+   "kind": "qrc_window",
+   "ops_after": {
+    "r": 31,
+    "cz": 10,
+    "measure": 6
+   },
+   "swaps": 0,
+   "cz_before": 10,
+   "cz_after": 10,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "4",
+   "instance": 0,
+   "kind": "reservoir",
+   "ops_after": {
+    "r": 24,
+    "cz": 10,
+    "measure": 6
+   },
+   "swaps": 0,
+   "cz_before": 10,
+   "cz_after": 10,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "4",
+   "instance": 1,
+   "kind": "reservoir",
+   "ops_after": {
+    "r": 24,
+    "cz": 10,
+    "measure": 6
+   },
+   "swaps": 0,
+   "cz_before": 10,
+   "cz_after": 10,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "4",
+   "instance": 2,
+   "kind": "reservoir",
+   "ops_after": {
+    "r": 24,
+    "cz": 10,
+    "measure": 6
+   },
+   "swaps": 0,
+   "cz_before": 10,
+   "cz_after": 10,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "4",
+   "instance": 3,
+   "kind": "reservoir",
+   "ops_after": {
+    "r": 24,
+    "cz": 10,
+    "measure": 6
+   },
+   "swaps": 0,
+   "cz_before": 10,
+   "cz_after": 10,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "4",
+   "instance": 4,
+   "kind": "reservoir",
+   "ops_after": {
+    "r": 24,
+    "cz": 10,
+    "measure": 6
+   },
+   "swaps": 0,
+   "cz_before": 10,
+   "cz_after": 10,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "4",
+   "instance": 0,
+   "kind": "qrc_window",
+   "ops_after": {
+    "r": 55,
+    "cz": 20,
+    "measure": 6
+   },
+   "swaps": 0,
+   "cz_before": 20,
+   "cz_after": 20,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "8",
+   "instance": 0,
+   "kind": "reservoir",
+   "ops_after": {
+    "r": 48,
+    "cz": 19,
+    "measure": 6
+   },
+   "swaps": 0,
+   "cz_before": 19,
+   "cz_after": 19,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "8",
+   "instance": 1,
+   "kind": "reservoir",
+   "ops_after": {
+    "r": 48,
+    "cz": 19,
+    "measure": 6
+   },
+   "swaps": 0,
+   "cz_before": 19,
+   "cz_after": 19,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "8",
+   "instance": 2,
+   "kind": "reservoir",
+   "ops_after": {
+    "r": 48,
+    "cz": 19,
+    "measure": 6
+   },
+   "swaps": 0,
+   "cz_before": 19,
+   "cz_after": 19,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "8",
+   "instance": 3,
+   "kind": "reservoir",
+   "ops_after": {
+    "r": 48,
+    "cz": 19,
+    "measure": 6
+   },
+   "swaps": 0,
+   "cz_before": 19,
+   "cz_after": 19,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "8",
+   "instance": 4,
+   "kind": "reservoir",
+   "ops_after": {
+    "r": 48,
+    "cz": 19,
+    "measure": 6
+   },
+   "swaps": 0,
+   "cz_before": 19,
+   "cz_after": 19,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "8",
+   "instance": 0,
+   "kind": "qrc_window",
+   "ops_after": {
+    "r": 103,
+    "cz": 38,
+    "measure": 6
+   },
+   "swaps": 0,
+   "cz_before": 38,
+   "cz_after": 38,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "16",
+   "instance": 0,
+   "kind": "reservoir",
+   "ops_after": {
+    "r": 96,
+    "cz": 38,
+    "measure": 6
+   },
+   "swaps": 0,
+   "cz_before": 38,
+   "cz_after": 38,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "16",
+   "instance": 1,
+   "kind": "reservoir",
+   "ops_after": {
+    "r": 96,
+    "cz": 38,
+    "measure": 6
+   },
+   "swaps": 0,
+   "cz_before": 38,
+   "cz_after": 38,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "16",
+   "instance": 2,
+   "kind": "reservoir",
+   "ops_after": {
+    "r": 96,
+    "cz": 38,
+    "measure": 6
+   },
+   "swaps": 0,
+   "cz_before": 38,
+   "cz_after": 38,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "16",
+   "instance": 3,
+   "kind": "reservoir",
+   "ops_after": {
+    "r": 96,
+    "cz": 38,
+    "measure": 6
+   },
+   "swaps": 0,
+   "cz_before": 38,
+   "cz_after": 38,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "16",
+   "instance": 4,
+   "kind": "reservoir",
+   "ops_after": {
+    "r": 96,
+    "cz": 38,
+    "measure": 6
+   },
+   "swaps": 0,
+   "cz_before": 38,
+   "cz_after": 38,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "iqm",
+   "level": "16",
+   "instance": 0,
+   "kind": "qrc_window",
+   "ops_after": {
+    "r": 199,
+    "cz": 76,
+    "measure": 6
+   },
+   "swaps": 0,
+   "cz_before": 76,
+   "cz_after": 76,
+   "only_native": true,
+   "all_cz_on_couplers": true,
+   "physical_qubits": [
+    29,
+    28,
+    30,
+    37,
+    36,
+    38
+   ],
+   "ok": true
+  },
+  {
+   "platform": "aqt",
+   "level": "0.25",
+   "instance": 0,
+   "kind": "reservoir",
+   "ops_after": {
+    "rz": 48,
+    "r": 24,
+    "rxx": 16,
+    "measure": 6
+   },
+   "rxx_before": 16,
+   "rxx_after": 16,
+   "only_native": true,
+   "swaps": 0,
+   "api_payload_ok": true,
+   "ideal_run_ok": true,
+   "ok": true
+  },
+  {
+   "platform": "aqt",
+   "level": "0.25",
+   "instance": 1,
+   "kind": "reservoir",
+   "ops_after": {
+    "rz": 48,
+    "r": 24,
+    "rxx": 16,
+    "measure": 6
+   },
+   "rxx_before": 16,
+   "rxx_after": 16,
+   "only_native": true,
+   "swaps": 0,
+   "api_payload_ok": true,
+   "ideal_run_ok": true,
+   "ok": true
+  },
+  {
+   "platform": "aqt",
+   "level": "0.25",
+   "instance": 2,
+   "kind": "reservoir",
+   "ops_after": {
+    "rz": 48,
+    "r": 24,
+    "rxx": 16,
+    "measure": 6
+   },
+   "rxx_before": 16,
+   "rxx_after": 16,
+   "only_native": true,
+   "swaps": 0,
+   "api_payload_ok": true,
+   "ideal_run_ok": true,
+   "ok": true
+  },
+  {
+   "platform": "aqt",
+   "level": "0.25",
+   "instance": 3,
+   "kind": "reservoir",
+   "ops_after": {
+    "rz": 42,
+    "r": 21,
+    "rxx": 16,
+    "measure": 6
+   },
+   "rxx_before": 16,
+   "rxx_after": 16,
+   "only_native": true,
+   "swaps": 0,
+   "api_payload_ok": true,
+   "ideal_run_ok": true,
+   "ok": true
+  },
+  {
+   "platform": "aqt",
+   "level": "0.25",
+   "instance": 4,
+   "kind": "reservoir",
+   "ops_after": {
+    "rz": 42,
+    "r": 21,
+    "rxx": 16,
+    "measure": 6
+   },
+   "rxx_before": 16,
+   "rxx_after": 16,
+   "only_native": true,
+   "swaps": 0,
+   "api_payload_ok": true,
+   "ideal_run_ok": true,
+   "ok": true
+  },
+  {
+   "platform": "aqt",
+   "level": "0.25",
+   "instance": 0,
+   "kind": "qrc_window",
+   "ops_after": {
+    "rz": 96,
+    "r": 48,
+    "rxx": 32,
+    "measure": 6
+   },
+   "rxx_before": 32,
+   "rxx_after": 32,
+   "only_native": true,
+   "swaps": 0,
+   "api_payload_ok": true,
+   "ideal_run_ok": true,
+   "ok": true
+  },
+  {
+   "platform": "aqt",
+   "level": "0.5",
+   "instance": 0,
+   "kind": "reservoir",
+   "ops_after": {
+    "rz": 48,
+    "rxx": 32,
+    "r": 24,
+    "measure": 6
+   },
+   "rxx_before": 32,
+   "rxx_after": 32,
+   "only_native": true,
+   "swaps": 0,
+   "api_payload_ok": true,
+   "ideal_run_ok": true,
+   "ok": true
+  },
+  {
+   "platform": "aqt",
+   "level": "0.5",
+   "instance": 1,
+   "kind": "reservoir",
+   "ops_after": {
+    "rz": 48,
+    "rxx": 32,
+    "r": 24,
+    "measure": 6
+   },
+   "rxx_before": 32,
+   "rxx_after": 32,
+   "only_native": true,
+   "swaps": 0,
+   "api_payload_ok": true,
+   "ideal_run_ok": true,
+   "ok": true
+  },
+  {
+   "platform": "aqt",
+   "level": "0.5",
+   "instance": 2,
+   "kind": "reservoir",
+   "ops_after": {
+    "rz": 48,
+    "rxx": 32,
+    "r": 24,
+    "measure": 6
+   },
+   "rxx_before": 32,
+   "rxx_after": 32,
+   "only_native": true,
+   "swaps": 0,
+   "api_payload_ok": true,
+   "ideal_run_ok": true,
+   "ok": true
+  },
+  {
+   "platform": "aqt",
+   "level": "0.5",
+   "instance": 3,
+   "kind": "reservoir",
+   "ops_after": {
+    "rz": 48,
+    "rxx": 32,
+    "r": 24,
+    "measure": 6
+   },
+   "rxx_before": 32,
+   "rxx_after": 32,
+   "only_native": true,
+   "swaps": 0,
+   "api_payload_ok": true,
+   "ideal_run_ok": true,
+   "ok": true
+  },
+  {
+   "platform": "aqt",
+   "level": "0.5",
+   "instance": 4,
+   "kind": "reservoir",
+   "ops_after": {
+    "rz": 48,
+    "rxx": 32,
+    "r": 24,
+    "measure": 6
+   },
+   "rxx_before": 32,
+   "rxx_after": 32,
+   "only_native": true,
+   "swaps": 0,
+   "api_payload_ok": true,
+   "ideal_run_ok": true,
+   "ok": true
+  },
+  {
+   "platform": "aqt",
+   "level": "0.5",
+   "instance": 0,
+   "kind": "qrc_window",
+   "ops_after": {
+    "rz": 96,
+    "rxx": 64,
+    "r": 48,
+    "measure": 6
+   },
+   "rxx_before": 64,
+   "rxx_after": 64,
+   "only_native": true,
+   "swaps": 0,
+   "api_payload_ok": true,
+   "ideal_run_ok": true,
+   "ok": true
+  },
+  {
+   "platform": "aqt",
+   "level": "0.75",
+   "instance": 0,
+   "kind": "reservoir",
+   "ops_after": {
+    "rz": 48,
+    "rxx": 44,
+    "r": 24,
+    "measure": 6
+   },
+   "rxx_before": 44,
+   "rxx_after": 44,
+   "only_native": true,
+   "swaps": 0,
+   "api_payload_ok": true,
+   "ideal_run_ok": true,
+   "ok": true
+  },
+  {
+   "platform": "aqt",
+   "level": "0.75",
+   "instance": 1,
+   "kind": "reservoir",
+   "ops_after": {
+    "rz": 48,
+    "rxx": 44,
+    "r": 24,
+    "measure": 6
+   },
+   "rxx_before": 44,
+   "rxx_after": 44,
+   "only_native": true,
+   "swaps": 0,
+   "api_payload_ok": true,
+   "ideal_run_ok": true,
+   "ok": true
+  },
+  {
+   "platform": "aqt",
+   "level": "0.75",
+   "instance": 2,
+   "kind": "reservoir",
+   "ops_after": {
+    "rz": 48,
+    "rxx": 44,
+    "r": 24,
+    "measure": 6
+   },
+   "rxx_before": 44,
+   "rxx_after": 44,
+   "only_native": true,
+   "swaps": 0,
+   "api_payload_ok": true,
+   "ideal_run_ok": true,
+   "ok": true
+  },
+  {
+   "platform": "aqt",
+   "level": "0.75",
+   "instance": 3,
+   "kind": "reservoir",
+   "ops_after": {
+    "rz": 48,
+    "rxx": 44,
+    "r": 24,
+    "measure": 6
+   },
+   "rxx_before": 44,
+   "rxx_after": 44,
+   "only_native": true,
+   "swaps": 0,
+   "api_payload_ok": true,
+   "ideal_run_ok": true,
+   "ok": true
+  },
+  {
+   "platform": "aqt",
+   "level": "0.75",
+   "instance": 4,
+   "kind": "reservoir",
+   "ops_after": {
+    "rz": 48,
+    "rxx": 44,
+    "r": 24,
+    "measure": 6
+   },
+   "rxx_before": 44,
+   "rxx_after": 44,
+   "only_native": true,
+   "swaps": 0,
+   "api_payload_ok": true,
+   "ideal_run_ok": true,
+   "ok": true
+  },
+  {
+   "platform": "aqt",
+   "level": "0.75",
+   "instance": 0,
+   "kind": "qrc_window",
+   "ops_after": {
+    "rz": 96,
+    "rxx": 88,
+    "r": 48,
+    "measure": 6
+   },
+   "rxx_before": 88,
+   "rxx_after": 88,
+   "only_native": true,
+   "swaps": 0,
+   "api_payload_ok": true,
+   "ideal_run_ok": true,
+   "ok": true
+  },
+  {
+   "platform": "aqt",
+   "level": "1.0",
+   "instance": 0,
+   "kind": "reservoir",
+   "ops_after": {
+    "rxx": 60,
+    "rz": 48,
+    "r": 24,
+    "measure": 6
+   },
+   "rxx_before": 60,
+   "rxx_after": 60,
+   "only_native": true,
+   "swaps": 0,
+   "api_payload_ok": true,
+   "ideal_run_ok": true,
+   "ok": true
+  },
+  {
+   "platform": "aqt",
+   "level": "1.0",
+   "instance": 1,
+   "kind": "reservoir",
+   "ops_after": {
+    "rxx": 60,
+    "rz": 48,
+    "r": 24,
+    "measure": 6
+   },
+   "rxx_before": 60,
+   "rxx_after": 60,
+   "only_native": true,
+   "swaps": 0,
+   "api_payload_ok": true,
+   "ideal_run_ok": true,
+   "ok": true
+  },
+  {
+   "platform": "aqt",
+   "level": "1.0",
+   "instance": 2,
+   "kind": "reservoir",
+   "ops_after": {
+    "rxx": 60,
+    "rz": 48,
+    "r": 24,
+    "measure": 6
+   },
+   "rxx_before": 60,
+   "rxx_after": 60,
+   "only_native": true,
+   "swaps": 0,
+   "api_payload_ok": true,
+   "ideal_run_ok": true,
+   "ok": true
+  },
+  {
+   "platform": "aqt",
+   "level": "1.0",
+   "instance": 3,
+   "kind": "reservoir",
+   "ops_after": {
+    "rxx": 60,
+    "rz": 48,
+    "r": 24,
+    "measure": 6
+   },
+   "rxx_before": 60,
+   "rxx_after": 60,
+   "only_native": true,
+   "swaps": 0,
+   "api_payload_ok": true,
+   "ideal_run_ok": true,
+   "ok": true
+  },
+  {
+   "platform": "aqt",
+   "level": "1.0",
+   "instance": 4,
+   "kind": "reservoir",
+   "ops_after": {
+    "rxx": 60,
+    "rz": 48,
+    "r": 24,
+    "measure": 6
+   },
+   "rxx_before": 60,
+   "rxx_after": 60,
+   "only_native": true,
+   "swaps": 0,
+   "api_payload_ok": true,
+   "ideal_run_ok": true,
+   "ok": true
+  },
+  {
+   "platform": "aqt",
+   "level": "1.0",
+   "instance": 0,
+   "kind": "qrc_window",
+   "ops_after": {
+    "rxx": 120,
+    "rz": 96,
+    "r": 48,
+    "measure": 6
+   },
+   "rxx_before": 120,
+   "rxx_after": 120,
+   "only_native": true,
+   "swaps": 0,
+   "api_payload_ok": true,
+   "ideal_run_ok": true,
+   "ok": true
+  }
+ ]
+}
