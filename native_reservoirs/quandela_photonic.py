@@ -301,7 +301,8 @@ class QuandelaPhotonicReservoir(NativeReservoir):
             return np.array(list(self._window_probs(np.asarray(inputs, float), kw.get("theta_scale", np.pi))))
         raise ValueError(f"unknown task {task!r}")
 
-    def _window_probs(self, windows, theta_scale):
+    def window_unitaries(self, windows, theta_scale: float = np.pi):
+        """Yield V_t = U_res E(u_t) ⋯ U_res E(u_{t-W+1}) U_pre for each input window (oldest input first)."""
         cache = {}
         for row in windows:
             V = self.U_pre.copy()
@@ -313,6 +314,10 @@ class QuandelaPhotonicReservoir(NativeReservoir):
                     if len(cache) < 20000:
                         cache[key] = M
                 V = M @ V
+            yield V
+
+    def _window_probs(self, windows, theta_scale):
+        for V in self.window_unitaries(windows, theta_scale):
             yield self.probabilities(V)
 
     def features_from_probs(self, P: np.ndarray, kind: str = "correlators") -> np.ndarray:

@@ -358,3 +358,34 @@ def test_phase_encoding_design():
     assert r.resource_metrics()["phase_shifters_data"] == 6
     P = r.run(np.random.default_rng(0).uniform(0, 0.4, (4, 6)), task="lih", angle_map="arcsin_sqrt")
     assert np.allclose(P.sum(axis=1), 1)
+
+
+def test_noisy_emulation_basis_rotations_and_counts():
+    """Native R-gate basis rotations + counts → the same 1-local Paulis as the exact state."""
+    from native_reservoirs import noisy_emulation as ne
+    n, rng = 3, np.random.default_rng(3)
+    qc = QuantumCircuit(n)
+    for q in range(n):
+        qc.r(*rng.uniform(0, np.pi, 2), q)
+    qc.cz(0, 1); qc.rxx(0.7, 1, 2)
+    for q in range(n):
+        qc.r(*rng.uniform(0, np.pi, 2), q)
+    psi = Statevector(qc).data
+    counts = np.zeros((1, 3, 2 ** n))
+    for s, b in enumerate(ne.SETTINGS):
+        c = qc.copy()
+        for name, theta, phi in ne.BASIS_OPS[b]:
+            for q in range(n):
+                c.r(theta, phi, q)
+        counts[0, s] = Statevector(c).probabilities()
+    assert np.allclose(ne.pauli1_from_counts(counts, n), ne.pauli1_exact(psi[None], n), atol=1e-12)
+
+
+def test_noisy_emulation_calibrations():
+    from native_reservoirs import noisy_emulation as ne
+    rng = np.random.default_rng(0)
+    X = rng.uniform(-1, 1, (50, 4))
+    a, b = ne.calibrate(X, 0.8 * X + 0.05)
+    assert np.allclose(a, 0.8) and np.allclose(b, 0.05)
+    Xd = rng.uniform(0, 1, (50, 4))
+    assert abs(ne.calibrate_mixture(X, Xd, 0.9 * X + 0.1 * Xd) - 0.9) < 1e-12

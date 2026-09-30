@@ -33,6 +33,7 @@ Expressivity/
 │   ├── diagnostics.py              # ORS (original), ORS_LO (photonic analogue), R_eff
 │   ├── tasks.py                    # LiH weights + energy data, Exp3 readout protocols
 │   ├── experiment.py               # seeded sweep runner, caching, shot budget, noise checks
+│   ├── noisy_emulation.py          # task performance on vendor noisy emulators + Perceval noise
 │   └── plotting.py                 # Exp4 figures and tables
 ├── tests/test_native_reservoirs.py # pytest suite for the Exp4 package
 ├── requirements-vendor.txt         # pins for the separate vendor-SDK environment (qiskit 1.x)
@@ -51,7 +52,8 @@ Expressivity/
 │   │   └── emsig/emsig_QRC.py           # Cluster script: QRC on EMSIG energy data
 │   └── native_hardware/
 │       ├── vendor_export.py              # (vendor env) export IQM / AQT targets → data/hardware/
-│       └── vendor_validate.py            # (vendor env) transpile/run Exp4 circuits on vendor targets
+│       ├── vendor_validate.py            # (vendor env) transpile/run Exp4 circuits on vendor targets
+│       └── vendor_tasks.py               # (vendor env) run the LiH / energy task circuits on noisy emulators
 │
 ├── data/
 │   ├── LiH/                  # Ground-state energies and bond lengths
@@ -174,7 +176,7 @@ uv pip install --python ../.venv-vendor/bin/python -r requirements-vendor.txt
 - **Runtime.** A full recomputation (`FORCE = True`) takes about an hour on 16 cores. With the cache present, the notebook runs in under a minute.
 - **Data.** The energy task needs `data/time_series/emsig_energy_data_by_ems.csv` (gitignored EMSIG export used by Exp 3).
 - **Seeds.** Every reservoir instance is seeded with `derive_seed(base_seed=2026, platform, level, instance)`. Seeds, the configuration hash, package versions and the git SHA are written to `results/native_hardware/metadata.json`.
-- **Vendor steps inside the notebook.** The notebook calls `vendor_validate.py` through `subprocess` when `../.venv-vendor` exists, and otherwise uses the cached `results/native_hardware/vendor/*.json`.
+- **Vendor steps inside the notebook.** The notebook calls `vendor_validate.py` and `vendor_tasks.py` through `subprocess` when `../.venv-vendor` exists, and otherwise uses the cached `results/native_hardware/vendor/` files. `vendor_tasks.py` runs about 32k task circuits on IQM's fake Crystal-54 backend (~3 min) and AQT's noisy offline simulator (~7 min with `--workers 12`).
 
 ---
 

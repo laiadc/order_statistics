@@ -237,20 +237,25 @@ class GateWindowFeatures:
         self.obs = self._q.obs_array
         self.n = reservoir_circuit.num_qubits
 
+    def window_states(self, rows) -> np.ndarray:
+        """Output states (T, 2^n) of the no-reset window circuits (qiskit little-endian)."""
+        rows = np.asarray(rows, dtype=float)
+        psi = np.zeros((len(rows), 2 ** self.n), dtype=complex)
+        hidden = np.ones(2 ** (self.n - 1)) / np.sqrt(2 ** (self.n - 1))
+        psi[:] = np.kron(hidden, np.array([1.0, 0.0]))
+        for w in range(rows.shape[1]):
+            G = np.stack([_prx(np.pi / 2, np.pi / 2 - self.theta_scale * u) for u in rows[:, w]])
+            psi = np.einsum("tab,tcb->tca", G, psi.reshape(len(rows), -1, 2)).reshape(len(rows), -1)
+            psi = psi @ self.U.T
+        return psi
+
     def window_features(self, windows, chunk: int = 256, **kw) -> np.ndarray:
         windows = np.asarray(windows, dtype=float)
         if self.mode == "reset":
             return self._features_reset(windows)
         out = []
         for i in range(0, len(windows), chunk):
-            rows = windows[i:i + chunk]
-            psi = np.zeros((len(rows), 2 ** self.n), dtype=complex)
-            hidden = np.ones(2 ** (self.n - 1)) / np.sqrt(2 ** (self.n - 1))
-            psi[:] = np.kron(hidden, np.array([1.0, 0.0]))
-            for w in range(rows.shape[1]):
-                G = np.stack([_prx(np.pi / 2, np.pi / 2 - self.theta_scale * u) for u in rows[:, w]])
-                psi = np.einsum("tab,tcb->tca", G, psi.reshape(len(rows), -1, 2)).reshape(len(rows), -1)
-                psi = psi @ self.U.T
+            psi = self.window_states(windows[i:i + chunk])
             Opsi = np.einsum("oab,tb->toa", self.obs, psi)
             out.append(np.real(np.einsum("ta,toa->to", psi.conj(), Opsi)))
         return np.vstack(out)

@@ -215,3 +215,21 @@ def hardware_plan(LI, QI, minutes: float = 15, n_test: int = 20, T_test: int = 2
             "ORS: circuits at 10⁴ shots": f"{budget / 1e4:.0f}",
         })
     return pd.DataFrame(rows)
+
+
+# ── Task performance under realistic noise (§6) ──────────────────────────────
+def noisy_task_table(NP) -> pd.DataFrame:
+    """LiH RMSE / energy R², from noise-free to the noisy emulators (mean ± spread over shot-noise draws)."""
+    rows = []
+    for _, r in NP.iterrows():
+        lih = r.task == "lih"
+        fmt = "{:.2f}" if lih else "{:.3f}"
+        spread = lambda k: r.get(f"{k}_std") if (r.get(f"{k}_std") or 0) > 1e-9 else None     # deterministic → no ±
+        cell = lambda k: pm(r[k], spread(k), fmt) + (" mHa" if lih and np.isfinite(r[k]) else "")
+        conf = _level(r.platform, f"{float(r.level):g}") + (f", {int(r.n_layers)} layers" if pd.notna(r.n_layers) and r.n_layers else "")
+        rows.append({"platform": NAME[r.platform], "task": "LiH RMSE" if lih else "energy R²", "configuration": conf,
+                     "noise-free": cell("noise_free"), "twin prediction": cell("twin"),
+                     "emulator: twin readout": cell("emulator_twin"),
+                     "emulator: calibrated twin": cell("emulator_calibrated"),
+                     "emulator: trained on emulator": cell("emulator")})
+    return pd.DataFrame(rows)

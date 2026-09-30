@@ -1,0 +1,7 @@
+platform,task,configuration,noise-free,twin prediction,emulator: twin readout,emulator: calibrated twin,emulator: trained on emulator
+Euro-Q-Exa (IQM),LiH RMSE,L = 4,0.60 mHa,3.21 ± 0.12 mHa,11.50 ± 0.09 mHa,3.15 ± 0.11 mHa,3.05 mHa
+Piast-Q (AQT),LiH RMSE,ρ = 0.5,0.31 mHa,5.22 ± 0.17 mHa,7.00 ± 0.37 mHa,4.71 ± 0.14 mHa,4.34 mHa
+Lucy (Quandela),LiH RMSE,D = 6,0.21 mHa,3.39 ± 0.27 mHa,4.18 ± 0.32 mHa,3.76 ± 0.22 mHa,3.73 ± 0.33 mHa
+Euro-Q-Exa (IQM),energy R²,L = 1,0.490,0.448 ± 0.006,0.329 ± 0.028,0.454 ± 0.006,0.450
+Piast-Q (AQT),energy R²,"ρ = 0.5, 2 layers",0.493,0.466 ± 0.010,0.403 ± 0.046,0.481 ± 0.005,0.472
+Lucy (Quandela),energy R²,D = 2,0.510,0.379 ± 0.009,0.288 ± 0.087,0.353 ± 0.005,0.360 ± 0.017

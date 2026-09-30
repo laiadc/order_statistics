@@ -518,3 +518,33 @@ def fig_inference_budget(LI, var):
     fig.tight_layout()
     save(fig, "lih_inference_budget")
     return fig
+
+
+# ── Lucy under Perceval noise (§6) ────────────────────────────────────────────
+def fig_perceval_noise(PS: pd.DataFrame, ascella: float = 0.94):
+    """LiH RMSE and energy R² vs photon indistinguishability (Perceval noise model, fixed event count)."""
+    set_style()
+    fig, axes = plt.subplots(1, 2, figsize=(8.6, 3.3))
+    lines = (("emulator_twin", "twin readout (inference only)", "#8a8984", "o", "--"),
+             ("emulator_calibrated", "calibrated twin (inference only)", STYLE["quandela"]["color"], "^", "-"),
+             ("emulator", "readout trained on noisy data", INK, "s", ":"))
+    for ax, task, ylab in zip(axes, ("lih", "energy"), ("LiH test RMSE (mHa)", "Energy test R²")):
+        d = PS[PS.task == task].sort_values("indistinguishability")
+        for col, lab, c, m, ls in lines:
+            ax.errorbar(d.indistinguishability, d[col], yerr=d.get(f"{col}_std"), fmt=m, ls=ls, color=c, ms=5,
+                        lw=1.4, capsize=0, mec="white", mew=0.8, label=lab)
+        ax.axhline(d.twin.mean(), color=INK2, lw=1.0, ls="-.", label="twin prediction (ideal photons)")
+        if task == "lih":
+            ax.axhline(1.594, color=INK, lw=0.9, ls=(0, (1, 2)), label="chemical accuracy")
+        ax.axvline(ascella, color=GRID, lw=6, zorder=0)
+        ax.text(ascella, ax.get_ylim()[1], " Ascella", fontsize=7, color=INK2, va="top")
+        ax.set_xlabel("photon indistinguishability")
+        ax.set_ylabel(ylab)
+        ax.set_xticks([1.0, 0.95, 0.9, 0.85, 0.8])
+        ax.invert_xaxis()
+    axes[0].legend(fontsize=6.5, loc="upper left")
+    axes[0].set_title(f"LiH, {int(PS.shots.iloc[0]):,} events per input", loc="left")
+    axes[1].set_title(f"Energy, {int(PS.shots.iloc[0]):,} events per time step", loc="left")
+    fig.tight_layout()
+    save(fig, "perceval_noise")
+    return fig

@@ -672,18 +672,22 @@ def lih_inference_budget(cfg: Exp4Config, representative: dict,
     return pd.DataFrame(rows)
 
 
+def qrc_reservoir(cfg: Exp4Config, platform: str, level, n_layers=None):
+    """Reservoir used for the energy-task hardware plan (AQT may use fewer layers than the sweep)."""
+    from .aqt_iontrap import AQTIonTrapReservoir
+    if platform == "aqt" and n_layers:
+        return AQTIonTrapReservoir(cfg.n_sites, density=float(level), n_layers=n_layers,
+                                   seed=derive_seed(cfg.base_seed, "aqt_qrc", level, n_layers)).build()
+    return make_reservoir(platform, level, 0, cfg)
+
+
 def _qrc_inference_job(conf, S, rep, cfg, T_test):
     from . import tasks
     from .adapters import GateWindowFeatures, PhotonicQRC, WindowedQRC
-    from .aqt_iontrap import AQTIonTrapReservoir
     platform, level, n_layers = conf
     d = get_data(cfg)["energy"]
     rng = np.random.default_rng(derive_seed(cfg.base_seed, "qrc_inf", platform, str(level), S or 0, rep))
-    if platform == "aqt" and n_layers:
-        res = AQTIonTrapReservoir(cfg.n_sites, density=float(level), n_layers=n_layers,
-                                  seed=derive_seed(cfg.base_seed, "aqt_qrc", level, n_layers)).build()
-    else:
-        res = make_reservoir(platform, level, 0, cfg)
+    res = qrc_reservoir(cfg, platform, level, n_layers)
     if res.modality == "photonic":
         exact = res.probabilities
         if S is not None:

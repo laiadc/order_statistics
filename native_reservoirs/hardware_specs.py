@@ -92,6 +92,7 @@ FACTS = [
     ("quandela", "The Belenos system of the same MOSAIQ-12 line runs 12 photons in 24 modes (dual-rail).", "vendor docs", SRC["belenos"]),
     ("quandela", "Perceval models linear-optical circuits (BS, PS, arbitrary unitaries) acting on Fock states; SLOS computes exact output distributions.", "vendor docs", SRC["perceval"]),
     ("quandela", "Photonic quantum reservoir processing on a programmable chip: data in a subset of chip phases, a fixed random interferometer, photon-number-resolved coincidences post-selected on photon number, linear ridge readout.", "literature", SRC["paper"]),
+    ("quandela", "Quandela's Ascella platform reports a quantum-dot source with corrected 2-photon indistinguishability M_s = 0.944, g2(0) = 7.3e-3 and ~8 % total optical efficiency (source, chip and detectors).", "literature", "arXiv:2306.00874"),
     # Data
     ("data", "LiH ground states populate only 10 of the 28 Hamming-weight-2 bitstrings; singlet pairs a18=-a33, a66=-a129, a96=-a144 hold exactly; global sign is arbitrary per state.", "repository data", SRC["lih_data"]),
 ]
@@ -115,8 +116,8 @@ ASSUMPTIONS = [
     ("all", "Throughput (shots per second) figures are indicative, taken from other systems of the same vendors: IQM ≈ 500 shots/s (derived from IQM Garnet CLOPS ≈ 2600), AQT ≈ 5.6 circuit executions/s (IBEX Q1 '>20,000 circuits per hour', treated as single shots), Lucy 3-photon events from the rate model above.",
      "Every minute/shot estimate in the hardware plan scales with these numbers.", "Ask each provider for the actual repetition rate."),
     ("quandela", "Photon-number-resolving detection; a threshold-detection variant is provided.", "Pattern features depend on detector type.", "Confirm detector configuration."),
-    ("quandela", "Ideal simulation: lossless, perfectly indistinguishable photons, post-selected on n detected photons.",
-     "Real losses/distinguishability reduce contrast and rate.", "Noise-aware Perceval simulation + hardware runs."),
+    ("quandela", "Main results use ideal photons (lossless, indistinguishable, post-selected on n detected photons); the noisy checks (§6) use a Perceval NoiseModel with Ascella's published source figures (indistinguishability 0.94, g2 = 0.0073, transmittance 0.08) as a stand-in for Lucy.",
+     "Lucy's actual source and losses may differ.", "Take Lucy's source characterisation at access time; re-run §6 with it."),
     ("quandela", "Input |1,0,0,0,1,0,0,0,1,0,0,0⟩ (photons in modes 0, 4, 8) from a demultiplexed quantum-dot source; input states are user-selectable (Perceval with_input).", "Other input patterns change the reservoir.", "Configure input modes on Lucy."),
     ("quandela", "Any m×m unitary (m ≤ 24) of the random mesh is programmable on the universal chip.", "Reservoir mesh depth is a model parameter, not chip depth.", "Compile with the vendor toolchain."),
     ("quandela", "Haar-dialled mesh: MZI reflectivities sampled from Beta(1, α(c,k)), α = min(2c+1, 2(m-1-c)+1, 2(k+1), 2(m-1-k)); rule derived here by decomposing Haar unitaries for this mesh/MZI convention and verified statistically (not taken from a vendor).", "Full-depth mesh is Haar on U(m) (verified: KS tests, E|TrU|²=1, ORS_LO≈0).", "—"),
